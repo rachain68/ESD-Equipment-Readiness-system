@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #1f2937;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    @apply text-white hover:shadow-xl focus:ring-purple-500 shadow-lg;
+  }
+  
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    @apply text-gray-800 hover:bg-white focus:ring-gray-500 border border-white/20 shadow-lg;
+  }
+  
+  .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    @apply text-white hover:shadow-xl focus:ring-green-500 shadow-lg;
+  }
+  
+  .btn-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    @apply text-white hover:shadow-xl focus:ring-red-500 shadow-lg;
+  }
+  
+  .btn-outline {
+    @apply bg-white/20 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/50 focus:ring-white;
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    @apply rounded-2xl shadow-xl border border-white/20 overflow-hidden;
+  }
+  
+  .card-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    backdrop-filter: blur(10px);
+    @apply px-6 py-4 border-b border-white/20;
+  }
+  
+  .card-body {
+    @apply p-6;
+  }
+  
+  .input {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    @apply w-full px-4 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-500;
+  }
+  
+  .input:focus {
+    @apply shadow-xl bg-white;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    @apply text-white shadow-md;
+  }
+  
+  .badge-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    @apply text-white shadow-md;
+  }
+  
+  .badge-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    @apply text-white shadow-md;
+  }
+  
+  .badge-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    @apply text-white shadow-md;
+  }
+  
+  .table {
+    @apply w-full text-sm text-left;
+  }
+  
+  .table th {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    backdrop-filter: blur(10px);
+    @apply px-6 py-4 text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-white/20;
+  }
+  
+  .table td {
+    @apply px-6 py-4 whitespace-nowrap border-b border-white/10;
+  }
+  
+  .table tr:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    @apply border border-white/20 shadow-xl;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

@@ -1,0 +1,27 @@
+-- สร้างตารางรายงาน IQA
+CREATE TABLE iqa_reports (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    equipment_id INT NOT NULL,
+    test_date DATE NOT NULL,
+    inspector_id INT,
+    status ENUM('approved', 'rejected', 'pending') DEFAULT 'pending',
+    compliance_score DECIMAL(5,2),
+    findings TEXT,
+    recommendations TEXT,
+    corrective_actions TEXT,
+    next_inspection_date DATE,
+    standards_compliance JSON,
+    documentation_check BOOLEAN DEFAULT false,
+    training_check BOOLEAN DEFAULT false,
+    procedure_check BOOLEAN DEFAULT false,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE,
+    FOREIGN KEY (inspector_id) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_equipment_date (equipment_id, test_date),
+    INDEX idx_equipment_id (equipment_id),
+    INDEX idx_test_date (test_date),
+    INDEX idx_inspector_id (inspector_id),
+    INDEX idx_status (status)
+);
