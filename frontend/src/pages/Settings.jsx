@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 const Settings = () => {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, isAdmin } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
@@ -25,7 +25,7 @@ const Settings = () => {
     { id: 'profile', name: 'ข้อมูลส่วนตัว', icon: UserIcon },
     { id: 'notifications', name: 'การแจ้งเตือน', icon: BellIcon },
     { id: 'security', name: 'ความปลอดภัย', icon: ShieldCheckIcon },
-    { id: 'system', name: 'ระบบ', icon: ComputerDesktopIcon }
+    ...(isAdmin ? [{ id: 'system', name: 'ระบบ', icon: ComputerDesktopIcon }] : [])
   ]
 
   const handleProfileUpdate = async (e) => {
@@ -81,8 +81,7 @@ const Settings = () => {
                 type="text"
                 value={
                   user?.role === 'admin' ? 'ผู้ดูแลระบบ' :
-                  user?.role === 'operator' ? 'ผู้ดำเนินการ' :
-                  user?.role === 'inspector' ? 'ผู้ตรวจสอบ' : '-'
+                  user?.role === 'operator' ? 'ผู้ดำเนินการ' : '-'
                 }
                 disabled
                 className="input bg-gray-100"
@@ -326,6 +325,24 @@ const Settings = () => {
             </button>
             <button className="btn-secondary">
               ดูประวัติการสำรอง
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h3 className="text-lg font-medium text-gray-900">จัดการผู้ใช้</h3>
+          <p className="text-sm text-gray-600">จัดการบัญชีผู้ใช้ในระบบ</p>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex space-x-3">
+            <button className="btn-primary">
+              เพิ่มผู้ใช้ใหม่
+            </button>
+            <button className="btn-secondary">
+              ดูรายชื่อผู้ใช้
             </button>
           </div>
         </div>

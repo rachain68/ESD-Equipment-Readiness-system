@@ -15,7 +15,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const Header = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const { connected } = useSocket()
   const location = useLocation()
   const navigate = useNavigate()
@@ -25,7 +25,7 @@ const Header = () => {
     { name: 'อุปกรณ์', href: '/equipment', icon: WrenchScrewdriverIcon },
     { name: 'การทดสอบ', href: '/testing', icon: BeakerIcon },
     { name: 'รายงาน', href: '/reports', icon: DocumentTextIcon },
-    { name: 'ตั้งค่า', href: '/settings', icon: Cog6ToothIcon },
+    ...(isAdmin ? [{ name: 'ตั้งค่า', href: '/settings', icon: Cog6ToothIcon }] : [])
   ]
 
   const handleLogout = () => {

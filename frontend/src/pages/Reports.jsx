@@ -249,7 +249,7 @@ const Reports = () => {
                       {getStatusBadge(report.status, activeTab === 'iqa' ? 'iqa' : 'default')}
                     </td>
                     <td>
-                      {report.operator?.full_name || report.inspector?.full_name || '-'}
+                      {report.operator?.full_name || '-'}
                     </td>
                     <td>{new Date(report.created_at).toLocaleString('th-TH')}</td>
                     <td className="text-right">

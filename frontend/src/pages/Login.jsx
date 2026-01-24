@@ -143,7 +143,6 @@ const Login = () => {
           <div className="text-xs text-blue-700 space-y-1">
             <p><strong>Admin:</strong> admin / password123</p>
             <p><strong>Operator:</strong> operator1 / password123</p>
-            <p><strong>Inspector:</strong> inspector1 / password123</p>
           </div>
         </div>
       </div>

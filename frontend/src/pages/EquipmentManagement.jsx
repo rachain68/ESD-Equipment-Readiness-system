@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { equipmentAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { 
   PlusIcon, 
@@ -8,10 +9,12 @@ import {
   TrashIcon, 
   EyeIcon,
   MagnifyingGlassIcon,
-  FunnelIcon
+  FunnelIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 
 const EquipmentManagement = () => {
+  const { user, isAdmin } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
@@ -140,6 +143,7 @@ const EquipmentManagement = () => {
         <button
           onClick={() => setShowAddModal(true)}
           className="btn-primary flex items-center"
+          disabled={!isAdmin}
         >
           <PlusIcon className="w-4 h-4 mr-2" />
           เพิ่มอุปกรณ์
@@ -214,20 +218,24 @@ const EquipmentManagement = () => {
                     <td>{equipment.location || '-'}</td>
                     <td className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => handleEdit(equipment)}
-                          className="p-1 text-gray-400 hover:text-primary-600"
-                          title="แก้ไข"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(equipment)}
-                          className="p-1 text-gray-400 hover:text-error-600"
-                          title="ลบ"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleEdit(equipment)}
+                            className="p-1 text-gray-400 hover:text-primary-600"
+                            title="แก้ไข"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(equipment)}
+                            className="p-1 text-gray-400 hover:text-error-600"
+                            title="ลบ"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -249,9 +257,21 @@ const EquipmentManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
                 {editingEquipment ? 'แก้ไขอุปกรณ์' : 'เพิ่มอุปกรณ์ใหม่'}
               </h2>
+              <button
+                onClick={() => {
+                  setShowAddModal(false)
+                  setEditingEquipment(null)
+                  resetForm()
+                }}
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

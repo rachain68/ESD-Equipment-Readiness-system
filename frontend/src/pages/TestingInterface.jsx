@@ -18,6 +18,9 @@ const TestingInterface = () => {
   const [isTesting, setIsTesting] = useState(false)
   const [currentValue, setCurrentValue] = useState(0)
   const [testHistory, setTestHistory] = useState([])
+  const [serialPort, setSerialPort] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState('ยังไม่ได้เชื่อมต่อ')
   const [testData, setTestData] = useState({
     resistance_value: '',
     temperature: '',
@@ -71,40 +74,143 @@ const TestingInterface = () => {
     }
   })
 
+  // เชื่อมต่อกับ Serial Port (COM5)
+  const connectSerialPort = async () => {
+    try {
+      // ตรวจสอบว่า Browser รองรับ Web Serial API หรือไม่
+      if (!navigator.serial) {
+        toast.error('Browser ไม่รองรับ Web Serial API กรุณาใช้ Chrome/Edge')
+        return
+      }
+
+      setConnectionStatus('กำลังเชื่อมต่อ...')
+      
+      // ขอ permission และเชื่อมต่อกับพอร์ต
+      const port = await navigator.serial.requestPort()
+      
+      // ตั้งค่าการเชื่อมต่อ (COM5 คือพอร์ตที่ต้องการ)
+      await port.open({
+        baudRate: 9600,
+        dataBits: 8,
+        stopBits: 1,
+        parity: 'none'
+      })
+
+      setSerialPort(port)
+      setIsConnected(true)
+      setConnectionStatus('เชื่อมต่อสำเร็จ')
+      toast.success('เชื่อมต่อกับอุปกรณ์สำเร็จ')
+
+      // เริ่มอ่านข้อมูลจากพอร์ต
+      readSerialData(port)
+
+    } catch (error) {
+      console.error('Serial connection error:', error)
+      setConnectionStatus('เชื่อมต่อล้มเหลว: ' + error.message)
+      toast.error('เชื่อมต่อกับอุปกรณ์ล้มเหลว: ' + error.message)
+    }
+  }
+
+  // ตัดการเชื่อมต่อ Serial Port
+  const disconnectSerialPort = async () => {
+    try {
+      if (serialPort && serialPort.readable) {
+        await serialPort.close()
+      }
+      setSerialPort(null)
+      setIsConnected(false)
+      setConnectionStatus('ยังไม่ได้เชื่อมต่อ')
+      setCurrentValue(0)
+      setIsTesting(false)
+      toast.success('ตัดการเชื่อมต่อสำเร็จ')
+    } catch (error) {
+      console.error('Disconnect error:', error)
+      toast.error('ตัดการเชื่อมต่อล้มเหลว')
+    }
+  }
+
+  // อ่านข้อมูลจาก Serial Port
+  const readSerialData = async (port) => {
+    const textDecoder = new TextDecoderStream()
+    const readableStreamClosed = port.readable.pipeTo(textDecoder.writable)
+    const reader = textDecoder.readable.getReader()
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) {
+          break
+        }
+        
+        // แปลงข้อมูลที่ได้รับ
+        if (value) {
+          processSerialData(value.trim())
+        }
+      }
+    } catch (error) {
+      console.error('Read error:', error)
+    } finally {
+      reader.releaseLock()
+    }
+  }
+
+  // ประมวลผลข้อมูลจาก Serial Port
+  const processSerialData = (data) => {
+    try {
+      // สมมติว่าข้อมูลมาในรูปแบบ "RESISTANCE:123.45" หรือแค่ตัวเลข
+      let resistanceValue = 0
+      
+      if (data.includes('RESISTANCE:')) {
+        resistanceValue = parseFloat(data.split(':')[1])
+      } else if (data.includes('OHM:')) {
+        resistanceValue = parseFloat(data.split(':')[1])
+      } else {
+        // ลองแปลงเป็นตัวเลขโดยตรง
+        const numValue = parseFloat(data)
+        if (!isNaN(numValue)) {
+          resistanceValue = numValue
+        }
+      }
+
+      if (!isNaN(resistanceValue) && resistanceValue >= 0) {
+        setCurrentValue(resistanceValue.toFixed(2))
+        
+        // เพิ่มลงประวัติถ้ากำลังทดสอบ
+        if (isTesting) {
+          const newRecord = {
+            id: Date.now(),
+            value: resistanceValue,
+            timestamp: new Date()
+          }
+          setTestHistory(prev => [newRecord, ...prev].slice(0, 10))
+        }
+      }
+    } catch (error) {
+      console.error('Data processing error:', error)
+    }
+  }
+
   const handleStartTest = () => {
     if (!selectedEquipment) {
       toast.error('กรุณาเลือกอุปกรณ์')
       return
     }
     
+    if (!isConnected) {
+      toast.error('กรุณาเชื่อมต่อกับอุปกรณ์ก่อนเริ่มทดสอบ')
+      return
+    }
+    
     setIsTesting(true)
-    // จำลองการทดสอบแบบเรียลไทม์
-    simulateTest()
+    // ไม่ต้อง simulateTest แล้วเพราะอ่านค่าจาก Serial Port จริง
   }
 
   const handleStopTest = () => {
     setIsTesting(false)
-    setCurrentValue(0)
+    // ไม่รีเซ็ตค่าเพื่อให้เห็นค่าล่าสุดจากอุปกรณ์
   }
 
-  const simulateTest = () => {
-    if (!isTesting) return
-    
-    // จำลองค่าความต้านทานสุ่ม
-    const newValue = (Math.random() * 100 + 50).toFixed(2)
-    setCurrentValue(newValue)
-    
-    // เพิ่มลงประวัติ
-    const newRecord = {
-      id: Date.now(),
-      value: parseFloat(newValue),
-      timestamp: new Date()
-    }
-    setTestHistory(prev => [newRecord, ...prev].slice(0, 10))
-    
-    // ทดสอบต่อเนื่อง
-    setTimeout(simulateTest, 1000)
-  }
+  // ลบฟังก์ชัน simulateTest ออกเนื่องจากใช้ Serial Port จริงแล้ว
 
   const handleSaveTest = () => {
     if (!selectedEquipment) {
@@ -195,6 +301,19 @@ const TestingInterface = () => {
               <h3 className="text-lg font-medium text-gray-900">ค่าความต้านทานแบบเรียลไทม์</h3>
             </div>
             <div className="space-y-4">
+              {/* Connection Status */}
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">สถานะการเชื่อมต่อ:</span>
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className={`text-sm ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                      {connectionStatus}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary-600">
                   {currentValue} <span className="text-lg text-gray-500">Ω</span>
@@ -205,29 +324,51 @@ const TestingInterface = () => {
                       <div className="loading-spinner mr-2" />
                       <span className="text-sm text-gray-600">กำลังทดสอบ...</span>
                     </>
+                  ) : isConnected ? (
+                    <span className="text-sm text-green-600">พร้อมทดสอบ</span>
                   ) : (
-                    <span className="text-sm text-gray-500">พร้อมทดสอบ</span>
+                    <span className="text-sm text-gray-500">ยังไม่ได้เชื่อมต่อ</span>
                   )}
                 </div>
               </div>
 
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleStartTest}
-                  disabled={isTesting || !selectedEquipment}
-                  className={`flex-1 btn-success ${isTesting || !selectedEquipment ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <PlayIcon className="w-4 h-4 mr-2" />
-                  เริ่มทดสอบ
-                </button>
-                <button
-                  onClick={handleStopTest}
-                  disabled={!isTesting}
-                  className={`flex-1 btn-error ${!isTesting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <StopIcon className="w-4 h-4 mr-2" />
-                  หยุดทดสอบ
-                </button>
+              {/* Connection/Testing Controls */}
+              <div className="space-y-3">
+                <div className="flex space-x-3">
+                  <button
+                    onClick={connectSerialPort}
+                    disabled={isConnected}
+                    className={`flex-1 ${isConnected ? 'btn-outline opacity-50 cursor-not-allowed' : 'btn-primary'}`}
+                  >
+                    {isConnected ? 'เชื่อมต่อแล้ว' : 'เชื่อมต่ออุปกรณ์'}
+                  </button>
+                  <button
+                    onClick={disconnectSerialPort}
+                    disabled={!isConnected}
+                    className={`flex-1 ${!isConnected ? 'btn-outline opacity-50 cursor-not-allowed' : 'btn-error'}`}
+                  >
+                    ตัดการเชื่อมต่อ
+                  </button>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleStartTest}
+                    disabled={isTesting || !selectedEquipment || !isConnected}
+                    className={`flex-1 btn-success ${(isTesting || !selectedEquipment || !isConnected) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <PlayIcon className="w-4 h-4 mr-2" />
+                    เริ่มทดสอบ
+                  </button>
+                  <button
+                    onClick={handleStopTest}
+                    disabled={!isTesting}
+                    className={`flex-1 btn-error ${!isTesting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <StopIcon className="w-4 h-4 mr-2" />
+                    หยุดทดสอบ
+                  </button>
+                </div>
               </div>
             </div>
           </div>

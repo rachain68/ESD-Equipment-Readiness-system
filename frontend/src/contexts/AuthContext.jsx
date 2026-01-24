@@ -120,8 +120,7 @@ const AuthProviderComponent = ({ children }) => {
     updateProfile,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
-    isOperator: user?.role === 'operator',
-    isInspector: user?.role === 'inspector'
+    isOperator: user?.role === 'operator'
   }
 
   return (
