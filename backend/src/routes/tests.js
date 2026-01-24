@@ -9,26 +9,27 @@ const {
   getTestStats,
   getLatestTestRecords
 } = require('../controllers/testController');
+const { authenticateToken } = require('../middleware/auth');
 
 // GET /api/tests - ดูประวัติการทดสอบทั้งหมด
-router.get('/', getAllTestRecords);
+router.get('/', authenticateToken, getAllTestRecords);
 
 // GET /api/tests/stats - ดูสถิติการทดสอบ
-router.get('/stats', getTestStats);
+router.get('/stats', authenticateToken, getTestStats);
 
 // GET /api/tests/latest - ดูข้อมูลการทดสอบล่าสุด
-router.get('/latest', getLatestTestRecords);
+router.get('/latest', authenticateToken, getLatestTestRecords);
 
 // GET /api/tests/:id - ดูรายละเอียดการทดสอบ
-router.get('/:id', getTestRecordById);
+router.get('/:id', authenticateToken, getTestRecordById);
 
 // POST /api/tests - บันทึกข้อมูลการทดสอบ
-router.post('/', createTestRecord);
+router.post('/', authenticateToken, createTestRecord);
 
 // PUT /api/tests/:id - แก้ไขข้อมูลการทดสอบ
-router.put('/:id', updateTestRecord);
+router.put('/:id', authenticateToken, updateTestRecord);
 
 // DELETE /api/tests/:id - ลบข้อมูลการทดสอบ
-router.delete('/:id', deleteTestRecord);
+router.delete('/:id', authenticateToken, deleteTestRecord);
 
 module.exports = router;

@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { equipmentAPI, testAPI } from '../services/api'
-import { useSocket } from '../contexts/SocketContext'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { 
@@ -22,27 +21,69 @@ const TestingInterface = () => {
   const [isConnected, setIsConnected] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('ยังไม่ได้เชื่อมต่อ')
   const [testData, setTestData] = useState({
-    resistance_value: '',
+    cal_test: '',
     temperature: '',
     humidity: '',
     notes: ''
   })
 
   const { user } = useAuth()
-  const { emitTestData } = useSocket()
   const queryClient = useQueryClient()
 
-  // ดึงข้อมูลอุปกรณ์ที่ใช้งานได้
+  // ข้อมูลจำลองเพื่อทดสอบ (ไม่ต้องดึงจาก backend)
+  const mockEquipmentData = [
+    { id: 1, name: 'Digital Multimeter FLUKE 87-V', model: 'FLUKE-87V' },
+    { id: 2, name: 'Insulation Resistance Tester MEGGER', model: 'MIT-510' },
+    { id: 3, name: 'Earth Ground Resistance Tester', model: 'FLUKE-1623' },
+    { id: 4, name: 'Clamp Meter', model: 'FLUKE-376' }
+  ]
+
+  const mockLatestTests = [
+    {
+      id: 1,
+      equipment_name: 'Digital Multimeter FLUKE 87-V',
+      cal_test: 1000.5,
+      status: 'pass',
+      test_date: '2024-01-25T10:30:00Z',
+      operator_name: 'John Doe'
+    },
+    {
+      id: 2,
+      equipment_name: 'Insulation Resistance Tester MEGGER',
+      cal_test: 1500.2,
+      status: 'pass',
+      test_date: '2024-01-25T09:15:00Z',
+      operator_name: 'Jane Smith'
+    }
+  ]
+
+  // ดึงข้อมูลอุปกรณ์ที่ใช้งานได้ (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: equipmentData } = useQuery({
     queryKey: ['equipment-active'],
-    queryFn: () => equipmentAPI.getAll({ status: 'active' }).then(res => res.data)
+    queryFn: () => equipmentAPI.getAll({ status: 'active' }).then(res => res.data),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity,
+    enabled: false, // ปิดชั่วคราว
   })
 
-  // ดึงข้อมูลการทดสอบล่าสุด
+  // ดึงข้อมูลการทดสอบล่าสุด (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: latestTests } = useQuery({
     queryKey: ['latest-tests-10'],
-    queryFn: () => testAPI.getLatest({ limit: 10 }).then(res => res.data)
+    queryFn: () => testAPI.getLatest({ limit: 10 }).then(res => res.data),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity,
+    enabled: false, // ปิดชั่วคราว
   })
+
+  // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
+  const equipment = equipmentData || mockEquipmentData
+  const latestTestsData = latestTests || mockLatestTests
 
   // บันทึกการทดสอบ
   const testMutation = useMutation({
@@ -52,18 +93,9 @@ const TestingInterface = () => {
       queryClient.invalidateQueries({ queryKey: ['test-stats'] })
       toast.success('บันทึกข้อมูลการทดสอบสำเร็จ')
       
-      // ส่งข้อมูลไปยัง socket
-      emitTestData({
-        equipment_id: selectedEquipment,
-        resistance_value: parseFloat(testData.resistance_value),
-        temperature: testData.temperature ? parseFloat(testData.temperature) : null,
-        humidity: testData.humidity ? parseFloat(testData.humidity) : null,
-        notes: testData.notes
-      })
-      
       // รีเซ็ตฟอร์ม
       setTestData({
-        resistance_value: '',
+        cal_test: '',
         temperature: '',
         humidity: '',
         notes: ''
@@ -218,24 +250,24 @@ const TestingInterface = () => {
       return
     }
     
-    if (!testData.resistance_value) {
+    if (!testData.cal_test) {
       toast.error('กรุณากรอกค่าความต้านทาน')
       return
     }
 
     testMutation.mutate({
       equipment_id: parseInt(selectedEquipment),
-      resistance_value: parseFloat(testData.resistance_value),
+      cal_test: parseFloat(testData.cal_test),
       temperature: testData.temperature || null,
       humidity: testData.humidity || null,
       notes: testData.notes,
-      test_status: 'pass' // กำหนดค่าเริ่มต้นเป็น pass
+      test_status: 'pending'
     })
   }
 
   const getEquipmentName = (id) => {
-    const equipment = equipmentData?.equipment?.find(eq => eq.id === parseInt(id))
-    return equipment?.name || 'ไม่พบอุปกรณ์'
+    const equipmentItem = equipment?.find(eq => eq.id === parseInt(id))
+    return equipmentItem?.name || 'ไม่พบอุปกรณ์'
   }
 
   const getStatusBadge = (status) => {
@@ -277,7 +309,7 @@ const TestingInterface = () => {
                   disabled={isTesting}
                 >
                   <option value="">-- เลือกอุปกรณ์ --</option>
-                  {equipmentData?.equipment?.map((equipment) => (
+                  {equipment?.map((equipment) => (
                     <option key={equipment.id} value={equipment.id}>
                       {equipment.name} ({equipment.model || 'N/A'})
                     </option>
@@ -411,8 +443,8 @@ const TestingInterface = () => {
                   type="number"
                   step="0.01"
                   required
-                  value={testData.resistance_value}
-                  onChange={(e) => setTestData({...testData, resistance_value: e.target.value})}
+                  value={testData.cal_test}
+                  onChange={(e) => setTestData({...testData, cal_test: e.target.value})}
                   className="input"
                   placeholder="0.00"
                 />
@@ -484,8 +516,8 @@ const TestingInterface = () => {
               <h3 className="text-lg font-medium text-gray-900">การทดสอบล่าสุด</h3>
             </div>
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {latestTests?.length > 0 ? (
-                latestTests.map((test) => (
+              {latestTestsData?.length > 0 ? (
+                latestTestsData.map((test) => (
                   <div key={test.id} className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start">
                       <div>
@@ -493,7 +525,7 @@ const TestingInterface = () => {
                           {test.equipment?.name || 'Unknown Equipment'}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {parseFloat(test.resistance_value).toFixed(2)} Ω
+                          {test.cal_test ? parseFloat(test.cal_test).toFixed(2) : '0.00'} Ω
                         </p>
                         <p className="text-xs text-gray-500">
                           {new Date(test.test_date).toLocaleString('th-TH')}

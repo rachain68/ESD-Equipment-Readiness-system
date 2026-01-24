@@ -27,15 +27,15 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 1000 // limit each IP to 1000 requests per windowMs (increased from 100)
 });
 app.use('/api/', limiter);
 
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/equipment', require('./src/routes/equipment'));
-app.use('/api/tests', require('./src/routes/tests'));
 app.use('/api/reports', require('./src/routes/reports'));
+app.use('/api/test-records', require('./src/routes/testRecords'));
 
 // Socket.IO for real-time data
 io.on('connection', (socket) => {
@@ -73,14 +73,15 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     
-    await sequelize.sync({ alter: true });
+    // ใช้ sync() ธรรมดา ไม่แก้ไข table structure ที่มีอยู่แล้ว
+    await sequelize.sync();
     console.log('Database synchronized');
     
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.error('Unable to start server:', error);
     process.exit(1);
   }
 };

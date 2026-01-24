@@ -6,9 +6,24 @@ const createTestRecord = async (req, res) => {
   try {
     const {
       equipment_id,
-      resistance_value,
+      test_date,
+      brand,
+      model,
+      serial_number,
+      calibration_date,
+      due_date,
       temperature,
       humidity,
+      cal_test,
+      cal_first_retest,
+      cal_second_retest,
+      golden_conductive_test,
+      golden_conductive_first_retest,
+      golden_conductive_second_retest,
+      golden_insulative_test,
+      golden_insulative_first_retest,
+      golden_insulative_second_retest,
+      test_location = 'CAL Lab',
       notes,
       test_status = 'pending'
     } = req.body;
@@ -21,20 +36,35 @@ const createTestRecord = async (req, res) => {
 
     const testRecord = await TestRecord.create({
       equipment_id,
-      resistance_value,
+      test_date: test_date || new Date(),
+      brand,
+      model,
+      serial_number,
+      calibration_date,
+      due_date,
+      temperature: temperature ? parseFloat(temperature) : null,
+      humidity: humidity ? parseFloat(humidity) : null,
+      cal_test: cal_test ? parseFloat(cal_test) : null,
+      cal_first_retest: cal_first_retest ? parseFloat(cal_first_retest) : null,
+      cal_second_retest: cal_second_retest ? parseFloat(cal_second_retest) : null,
+      golden_conductive_test: golden_conductive_test ? parseFloat(golden_conductive_test) : null,
+      golden_conductive_first_retest: golden_conductive_first_retest ? parseFloat(golden_conductive_first_retest) : null,
+      golden_conductive_second_retest: golden_conductive_second_retest ? parseFloat(golden_conductive_second_retest) : null,
+      golden_insulative_test: golden_insulative_test ? parseFloat(golden_insulative_test) : null,
+      golden_insulative_first_retest: golden_insulative_first_retest ? parseFloat(golden_insulative_first_retest) : null,
+      golden_insulative_second_retest: golden_insulative_second_retest ? parseFloat(golden_insulative_second_retest) : null,
+      test_location,
       operator_id: req.user?.id || null,
-      temperature,
-      humidity,
       notes,
       test_status
     });
 
     // ส่งข้อมูลการทดสอบไปยัง clients ที่เชื่อมต่ออยู่ (real-time)
-    // Note: Socket.io จะถูกจัดการใน middleware หรือ service แยกต่างหาก
     console.log('Test data created:', testRecord);
 
     res.status(201).json(testRecord);
   } catch (error) {
+    console.error('Error creating test record:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -213,11 +243,11 @@ const getTestStats = async (req, res) => {
       where: { ...whereClause, test_status: 'pending' } 
     });
 
-    // ค่าเฉลี่ยความต้านทาน
+    // ค่าเฉลี่ยความต้านทาน (ใช้ค่าจาก CAL test)
     const avgResistance = await TestRecord.findOne({
       where: whereClause,
       attributes: [
-        [TestRecord.sequelize.fn('AVG', TestRecord.sequelize.col('resistance_value')), 'avg_resistance']
+        [TestRecord.sequelize.fn('AVG', TestRecord.sequelize.col('cal_test')), 'avg_resistance']
       ],
       raw: true
     });

@@ -17,23 +17,18 @@ export const SocketProvider = ({ children }) => {
   const [connected, setConnected] = useState(false)
 
   useEffect(() => {
-    // สร้าง socket connection
+    // สร้าง socket connection แค่ครั้งเดียว
     const newSocket = io('http://localhost:3000', {
-      transports: ['websocket', 'polling'],
-      autoConnect: false, // ไม่เชื่อมต่ออัตโนมัติ
+      transports: ['websocket'],
+      autoConnect: true,
       timeout: 5000,
-      reconnection: true,
-      reconnectionAttempts: 3,
-      reconnectionDelay: 1000
+      reconnection: false, // ปิด auto reconnect เพื่อป้องกัน infinite loop
     })
-
-    // พยายามเชื่อมต่อ
-    newSocket.connect()
 
     newSocket.on('connect', () => {
       console.log('Socket connected:', newSocket.id)
       setConnected(true)
-      toast.success('เชื่อมต่อแบบเรียลไทม์สำเร็จ')
+      // ลบ toast ออกเพื่อไม่ให้รบกวน
     })
 
     newSocket.on('disconnect', () => {
@@ -44,7 +39,6 @@ export const SocketProvider = ({ children }) => {
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error)
       setConnected(false)
-      // ไม่แสดง toast error ทุกครั้งเพื่อไม่ให้รบกวนผู้ใช้
     })
 
     // รับข้อมูลการทดสอบแบบเรียลไทม์
@@ -53,10 +47,10 @@ export const SocketProvider = ({ children }) => {
       
       switch (data.type) {
         case 'new_test':
-          toast.success(`มีการทดสอบใหม่: ${data.equipment}`)
+          // ลบ toast ออกเพื่อไม่ให้รบกวน
           break
         case 'updated_test':
-          toast('ข้อมูลการทดสอบถูกอัปเดต')
+          // ลบ toast ออกเพื่อไม่ให้รบกวน
           break
         default:
           break
@@ -65,11 +59,11 @@ export const SocketProvider = ({ children }) => {
 
     setSocket(newSocket)
 
-    // Cleanup
+    // Cleanup เมื่อ component unmount
     return () => {
-      newSocket.close()
+      newSocket.disconnect()
     }
-  }, [])
+  }, []) // Empty dependency array - ทำงานแค่ครั้งเดียว
 
   const emitTestData = (data) => {
     if (socket && connected) {

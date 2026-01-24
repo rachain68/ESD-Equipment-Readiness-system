@@ -17,21 +17,29 @@ const TestRecord = sequelize.define('TestRecord', {
       key: 'id'
     }
   },
-  resistance_value: {
-    type: DataTypes.DECIMAL(10, 4),
+  test_date: {
+    type: DataTypes.DATEONLY,
     allowNull: false
   },
-  test_date: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
+  brand: {
+    type: DataTypes.STRING(255),
+    allowNull: true
   },
-  operator_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: User,
-      key: 'id'
-    }
+  model: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  serial_number: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  calibration_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  due_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
   },
   temperature: {
     type: DataTypes.DECIMAL(5, 2),
@@ -41,13 +49,57 @@ const TestRecord = sequelize.define('TestRecord', {
     type: DataTypes.DECIMAL(5, 2),
     allowNull: true
   },
-  notes: {
-    type: DataTypes.TEXT,
+  // CAL Test Results
+  cal_test: {
+    type: DataTypes.DECIMAL(10, 2),
     allowNull: true
   },
-  test_status: {
-    type: DataTypes.ENUM('pass', 'fail', 'pending'),
-    defaultValue: 'pending'
+  cal_first_retest: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  cal_second_retest: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  // Golden Unit Conductive Test Results
+  golden_conductive_test: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  golden_conductive_first_retest: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  golden_conductive_second_retest: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  // Golden Unit Insulative Test Results
+  golden_insulative_test: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  golden_insulative_first_retest: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  golden_insulative_second_retest: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  // Test Location and Operator
+  test_location: {
+    type: DataTypes.ENUM('CAL Lab', 'Field'),
+    defaultValue: 'CAL Lab'
+  },
+  operator_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: User,
+      key: 'id'
+    }
   }
 }, {
   tableName: 'test_records',

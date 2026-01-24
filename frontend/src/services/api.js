@@ -54,15 +54,15 @@ export const equipmentAPI = {
   getStats: () => api.get('/equipment/stats'),
 }
 
-// Test APIs
+// Test APIs (ใช้สำหรับการทดสอบแบบเก่า - อาจจะเลิกใช้)
 export const testAPI = {
-  getAll: (params) => api.get('/tests', { params }),
-  getById: (id) => api.get(`/tests/${id}`),
-  create: (data) => api.post('/tests', data),
-  update: (id, data) => api.put(`/tests/${id}`, data),
-  delete: (id) => api.delete(`/tests/${id}`),
-  getStats: (params) => api.get('/tests/stats', { params }),
-  getLatest: (params) => api.get('/tests/latest', { params }),
+  getAll: (params) => api.get('/test-records', { params }),
+  getById: (id) => api.get(`/test-records/${id}`),
+  create: (data) => api.post('/test-records', data),
+  update: (id, data) => api.put(`/test-records/${id}`, data),
+  delete: (id) => api.delete(`/test-records/${id}`),
+  getStats: (params) => api.get('/test-records/stats', { params }),
+  getLatest: (params) => api.get('/test-records/latest', { params }),
 }
 
 // Report APIs
@@ -81,6 +81,16 @@ export const reportAPI = {
   
   // Summary
   getSummary: (params) => api.get('/reports/summary', { params }),
+}
+
+// Test Records APIs
+export const testRecordsAPI = {
+  getAll: (params) => api.get('/test-records', { params }),
+  getById: (id) => api.get(`/test-records/${id}`),
+  create: (data) => api.post('/test-records', data),
+  update: (id, data) => api.put(`/test-records/${id}`, data),
+  delete: (id) => api.delete(`/test-records/${id}`),
+  exportExcel: (params) => api.get('/test-records/export/excel', { params }),
 }
 
 export default api

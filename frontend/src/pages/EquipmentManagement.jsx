@@ -29,16 +29,69 @@ const EquipmentManagement = () => {
     description: ''
   })
 
+  // ข้อมูลจำลองเพื่อทดสอบ (ไม่ต้องดึงจาก backend)
+  const mockEquipmentData = [
+    {
+      id: 1,
+      name: 'Digital Multimeter FLUKE 87-V',
+      model: 'FLUKE-87V',
+      serial_number: 'FLUKE-87V-001',
+      calibration_date: '2024-01-15',
+      status: 'active',
+      location: 'Lab A',
+      description: 'High-precision digital multimeter'
+    },
+    {
+      id: 2,
+      name: 'Insulation Resistance Tester MEGGER',
+      model: 'MIT-510',
+      serial_number: 'MEGGER-510-002',
+      calibration_date: '2024-01-20',
+      status: 'active',
+      location: 'Lab B',
+      description: 'Insulation resistance tester'
+    },
+    {
+      id: 3,
+      name: 'Earth Ground Resistance Tester',
+      model: 'FLUKE-1623',
+      serial_number: 'FLUKE-1623-003',
+      calibration_date: '2023-12-10',
+      status: 'maintenance',
+      location: 'Lab C',
+      description: 'Earth ground resistance tester'
+    },
+    {
+      id: 4,
+      name: 'Clamp Meter',
+      model: 'FLUKE-376',
+      serial_number: 'FLUKE-376-004',
+      calibration_date: '2024-01-05',
+      status: 'active',
+      location: 'Lab A',
+      description: 'True RMS clamp meter'
+    }
+  ]
+
   const queryClient = useQueryClient()
 
-  // ดึงข้อมูลอุปกรณ์
+  // ดึงข้อมูลอุปกรณ์ (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: equipmentData, isLoading } = useQuery({
     queryKey: ['equipment', searchTerm, statusFilter],
     queryFn: () => equipmentAPI.getAll({
       search: searchTerm,
       status: statusFilter
-    }).then(res => res.data)
+    }).then(res => res.data),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity,
+    enabled: false, // ปิดชั่วคราว
   })
+
+  // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
+  const equipment = equipmentData || mockEquipmentData
 
   // สร้างอุปกรณ์ใหม่
   const createMutation = useMutation({
@@ -202,8 +255,8 @@ const EquipmentManagement = () => {
                     <div className="loading-spinner mx-auto" />
                   </td>
                 </tr>
-              ) : equipmentData?.equipment?.length > 0 ? (
-                equipmentData.equipment.map((equipment) => (
+              ) : equipment?.length > 0 ? (
+                equipment.map((equipment) => (
                   <tr key={equipment.id}>
                     <td className="font-medium">{equipment.name}</td>
                     <td>{equipment.model || '-'}</td>

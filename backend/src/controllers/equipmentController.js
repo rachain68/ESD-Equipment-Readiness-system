@@ -176,11 +176,67 @@ const getEquipmentStats = async (req, res) => {
   }
 };
 
+// เพิ่มข้อมูลอุปกรณ์เริ่มต้น (สำหรับการทดสอบ)
+const seedEquipment = async (req, res) => {
+  try {
+    const equipmentData = [
+      {
+        name: 'Digital Multimeter FLUKE 87-V',
+        model: 'FLUKE-87V',
+        serial_number: 'FLUKE001',
+        calibration_date: '2024-01-15',
+        status: 'active',
+        location: 'CAL Lab',
+        description: 'Digital multimeter for electrical measurements'
+      },
+      {
+        name: 'Insulation Resistance Tester MEGGER',
+        model: 'MIT-515',
+        serial_number: 'MEGGER001',
+        calibration_date: '2024-01-20',
+        status: 'active',
+        location: 'CAL Lab',
+        description: 'High voltage insulation tester'
+      },
+      {
+        name: 'Ground Resistance Tester FLUKE',
+        model: 'FLUKE-1623',
+        serial_number: 'FLUKE002',
+        calibration_date: '2024-01-10',
+        status: 'maintenance',
+        location: 'CAL Lab',
+        description: 'Earth ground resistance tester'
+      },
+      {
+        name: 'ESD Simulator 3M',
+        model: 'ESD-SIM-001',
+        serial_number: '3M001',
+        calibration_date: '2024-01-25',
+        status: 'active',
+        location: 'Field',
+        description: 'Portable ESD simulator for field testing'
+      }
+    ];
+
+    const createdEquipment = await Equipment.bulkCreate(equipmentData);
+    
+    res.status(201).json({
+      message: 'เพิ่มข้อมูลอุปกรณ์เริ่มต้นสำเร็จ',
+      count: createdEquipment.length,
+      data: createdEquipment
+    });
+  } catch (error) {
+    console.error('Error seeding equipment:', error);
+    res.status(500).json({ error: 'ไม่สามารถเพิ่มข้อมูลอุปกรณ์เริ่มต้นได้' });
+  }
+};
+
 module.exports = {
   getAllEquipment,
   getEquipmentById,
   createEquipment,
   updateEquipment,
   deleteEquipment,
-  getEquipmentStats
+  getEquipmentStats,
+  seedEquipment
 };
