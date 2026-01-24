@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { equipmentAPI, testRecordsAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -20,7 +21,9 @@ const TestRecords = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showViewModal, setShowViewModal] = useState(false)
   const [editingRecord, setEditingRecord] = useState(null)
+  const [viewingRecord, setViewingRecord] = useState(null)
   const [formData, setFormData] = useState({
     equipment_id: '',
     test_date: new Date().toISOString().split('T')[0],
@@ -60,12 +63,22 @@ const TestRecords = () => {
       equipment_name: 'Digital Multimeter FLUKE 87-V',
       test_date: '2024-01-25T10:30:00Z',
       operator_name: 'John Doe',
-      golden_conductive_test: 1000.5,
-      golden_conductive_first_retest: 1001.2,
-      golden_conductive_second_retest: 999.8,
-      golden_insulative_test: 50000.0,
-      golden_insulative_first_retest: 50100.0,
-      golden_insulative_second_retest: 49900.0,
+      brand: 'FLUKE',
+      model: 'FLUKE-87V',
+      serial_number: 'SN001234',
+      calibration_date: '2024-01-20',
+      due_date: '2025-01-20',
+      temperature: '25.0',
+      humidity: '45.0',
+      cal_test: '1.02',
+      cal_first_retest: '1.01',
+      cal_second_retest: '1.03',
+      golden_conductive_test: '1000.5',
+      golden_conductive_first_retest: '1001.2',
+      golden_conductive_second_retest: '999.8',
+      golden_insulative_test: '50000.0',
+      golden_insulative_first_retest: '50100.0',
+      golden_insulative_second_retest: '49900.0',
       test_location: 'CAL Lab',
       status: 'pass'
     },
@@ -75,12 +88,172 @@ const TestRecords = () => {
       equipment_name: 'Insulation Resistance Tester MEGGER',
       test_date: '2024-01-25T09:15:00Z',
       operator_name: 'Jane Smith',
-      golden_conductive_test: 1500.2,
-      golden_conductive_first_retest: 1499.8,
-      golden_conductive_second_retest: 1500.5,
-      golden_insulative_test: 60000.0,
-      golden_insulative_first_retest: 60100.0,
-      golden_insulative_second_retest: 59900.0,
+      brand: 'MEGGER',
+      model: 'MIT-510',
+      serial_number: 'SN005678',
+      calibration_date: '2024-01-18',
+      due_date: '2025-01-18',
+      temperature: '24.5',
+      humidity: '50.0',
+      cal_test: '1.00',
+      cal_first_retest: '1.01',
+      cal_second_retest: '0.99',
+      golden_conductive_test: '1500.2',
+      golden_conductive_first_retest: '1499.8',
+      golden_conductive_second_retest: '1500.5',
+      golden_insulative_test: '60000.0',
+      golden_insulative_first_retest: '60100.0',
+      golden_insulative_second_retest: '59900.0',
+      test_location: 'CAL Lab',
+      status: 'pass'
+    },
+    {
+      id: 3,
+      equipment_id: 1,
+      equipment_name: 'Digital Multimeter FLUKE 87-V',
+      test_date: '2024-01-24T14:20:00Z',
+      operator_name: 'Tom Wilson',
+      brand: 'FLUKE',
+      model: 'FLUKE-87V',
+      serial_number: 'SN001235',
+      calibration_date: '2024-01-19',
+      due_date: '2025-01-19',
+      temperature: '23.8',
+      humidity: '48.0',
+      cal_test: '1.02',
+      cal_first_retest: '1.02',
+      cal_second_retest: '1.01',
+      golden_conductive_test: '998.5',
+      golden_conductive_first_retest: '999.0',
+      golden_conductive_second_retest: '998.0',
+      golden_insulative_test: '49500.0',
+      golden_insulative_first_retest: '49600.0',
+      golden_insulative_second_retest: '49400.0',
+      test_location: 'CAL Lab',
+      status: 'pass'
+    },
+    {
+      id: 4,
+      equipment_id: 3,
+      equipment_name: 'Earth Ground Resistance Tester',
+      test_date: '2024-01-23T11:45:00Z',
+      operator_name: 'Sarah Johnson',
+      brand: 'FLUKE',
+      model: 'FLUKE-1623',
+      serial_number: 'SN009012',
+      calibration_date: '2024-01-17',
+      due_date: '2025-01-17',
+      temperature: '26.2',
+      humidity: '42.0',
+      cal_test: '0.98',
+      cal_first_retest: '0.99',
+      cal_second_retest: '0.97',
+      golden_conductive_test: '2000.0',
+      golden_conductive_first_retest: '2001.5',
+      golden_conductive_second_retest: '1998.5',
+      golden_insulative_test: '70000.0',
+      golden_insulative_first_retest: '70100.0',
+      golden_insulative_second_retest: '69900.0',
+      test_location: 'CAL Lab',
+      status: 'pass'
+    },
+    {
+      id: 5,
+      equipment_id: 4,
+      equipment_name: 'Clamp Meter',
+      test_date: '2024-01-22T16:30:00Z',
+      operator_name: 'Mike Brown',
+      brand: 'FLUKE',
+      model: 'FLUKE-376',
+      serial_number: 'SN013456',
+      calibration_date: '2024-01-16',
+      due_date: '2025-01-16',
+      temperature: '25.5',
+      humidity: '46.0',
+      cal_test: '1.01',
+      cal_first_retest: '1.00',
+      cal_second_retest: '1.02',
+      golden_conductive_test: '1200.8',
+      golden_conductive_first_retest: '1201.2',
+      golden_conductive_second_retest: '1200.4',
+      golden_insulative_test: '55000.0',
+      golden_insulative_first_retest: '55100.0',
+      golden_insulative_second_retest: '54900.0',
+      test_location: 'CAL Lab',
+      status: 'pass'
+    },
+    {
+      id: 6,
+      equipment_id: 2,
+      equipment_name: 'Insulation Resistance Tester MEGGER',
+      test_date: '2024-01-21T13:15:00Z',
+      operator_name: 'Lisa Davis',
+      brand: 'MEGGER',
+      model: 'MIT-510',
+      serial_number: 'SN005679',
+      calibration_date: '2024-01-15',
+      due_date: '2025-01-15',
+      temperature: '24.0',
+      humidity: '52.0',
+      cal_test: '1.03',
+      cal_first_retest: '1.02',
+      cal_second_retest: '1.04',
+      golden_conductive_test: '1450.0',
+      golden_conductive_first_retest: '1450.5',
+      golden_conductive_second_retest: '1449.5',
+      golden_insulative_test: '58000.0',
+      golden_insulative_first_retest: '58100.0',
+      golden_insulative_second_retest: '57900.0',
+      test_location: 'CAL Lab',
+      status: 'pass'
+    },
+    {
+      id: 7,
+      equipment_id: 1,
+      equipment_name: 'Digital Multimeter FLUKE 87-V',
+      test_date: '2024-01-20T10:00:00Z',
+      operator_name: 'David Lee',
+      brand: 'FLUKE',
+      model: 'FLUKE-87V',
+      serial_number: 'SN001236',
+      calibration_date: '2024-01-14',
+      due_date: '2025-01-14',
+      temperature: '25.8',
+      humidity: '44.0',
+      cal_test: '1.00',
+      cal_first_retest: '1.01',
+      cal_second_retest: '0.99',
+      golden_conductive_test: '1005.0',
+      golden_conductive_first_retest: '1005.5',
+      golden_conductive_second_retest: '1004.5',
+      golden_insulative_test: '50200.0',
+      golden_insulative_first_retest: '50300.0',
+      golden_insulative_second_retest: '50100.0',
+      test_location: 'CAL Lab',
+      status: 'pass'
+    },
+    {
+      id: 8,
+      equipment_id: 3,
+      equipment_name: 'Earth Ground Resistance Tester',
+      test_date: '2024-01-19T15:30:00Z',
+      operator_name: 'Emma White',
+      brand: 'FLUKE',
+      model: 'FLUKE-1623',
+      serial_number: 'SN009013',
+      calibration_date: '2024-01-13',
+      due_date: '2025-01-13',
+      temperature: '23.5',
+      humidity: '49.0',
+      cal_test: '0.99',
+      cal_first_retest: '0.98',
+      cal_second_retest: '1.00',
+      golden_conductive_test: '1995.0',
+      golden_conductive_first_retest: '1996.0',
+      golden_conductive_second_retest: '1994.0',
+      golden_insulative_test: '69500.0',
+      golden_insulative_first_retest: '69600.0',
+      golden_insulative_second_retest: '69400.0',
       test_location: 'CAL Lab',
       status: 'pass'
     }
@@ -116,6 +289,18 @@ const TestRecords = () => {
   // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
   const equipment = equipmentData || mockEquipmentData
   const testRecords = testRecordsData || mockTestRecordsData
+
+  // กรองข้อมูลตามการค้นหาและวันที่
+  const filteredTestRecords = testRecords?.filter(record => {
+    const matchesSearch = !searchTerm || 
+      getEquipmentName(record.equipment_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (record.model && record.model.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (record.serial_number && record.serial_number.toLowerCase().includes(searchTerm.toLowerCase()))
+    
+    const matchesDate = !dateFilter || record.test_date === dateFilter
+    
+    return matchesSearch && matchesDate
+  }) || []
 
   // สร้างบันทึกการทดสอบใหม่
   const createMutation = useMutation({
@@ -227,14 +412,183 @@ const TestRecords = () => {
     }
   }
 
+  const handleView = (record) => {
+    setViewingRecord(record)
+    setShowViewModal(true)
+  }
+
   const getEquipmentName = (id) => {
     const equipmentItem = equipment?.find(eq => eq.id === id)
     return equipmentItem?.name || 'ไม่พบอุปกรณ์'
   }
 
-  const handleExportExcel = () => {
-    // TODO: Implement Excel export functionality
-    toast.info('ฟังก์ชันส่งออก Excel จะเพิ่มในภายหลัง')
+  const handleExportExcel = async () => {
+    try {
+      // กรองข้อมูลตามการค้นหาและวันที่
+      let filteredData = testRecords || []
+      
+      if (searchTerm) {
+        filteredData = filteredData.filter(record => 
+          getEquipmentName(record.equipment_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (record.model && record.model.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (record.serial_number && record.serial_number.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
+      }
+      
+      if (dateFilter) {
+        filteredData = filteredData.filter(record => 
+          record.test_date === dateFilter
+        )
+      }
+
+      // โหลดไฟล์ Template จาก docs folder
+      const templateResponse = await fetch('/docs/007-000-000215-Form.1-Rev.C.xlsx')
+      if (!templateResponse.ok) {
+        throw new Error('ไม่พบไฟล์ template')
+      }
+      const arrayBuffer = await templateResponse.arrayBuffer()
+      const wb = XLSX.read(arrayBuffer, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]] // เลือก sheet แรก
+
+      // กำหนดแถวเริ่มต้นสำหรับข้อมูลใน Template (จากรูปภาพคือแถว 21)
+      const startRow = 21
+
+      // เขียนข้อมูลลงใน Template ตามคอลัมน์ที่กำหนด
+      filteredData.forEach((record, index) => {
+        const currentRow = startRow + index
+        
+        // Date (คอลัมน์ A)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 0 })] = { 
+          v: new Date(record.test_date).toLocaleDateString('th-TH'), 
+          t: 's' 
+        }
+        
+        // Equipment name (คอลัมน์ B)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 1 })] = { 
+          v: getEquipmentName(record.equipment_id), 
+          t: 's' 
+        }
+        
+        // Brand (คอลัมน์ C)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 2 })] = { 
+          v: record.brand || '-', 
+          t: 's' 
+        }
+        
+        // Model (คอลัมน์ D)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 3 })] = { 
+          v: record.model || '-', 
+          t: 's' 
+        }
+        
+        // Serial no. (คอลัมน์ E)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 4 })] = { 
+          v: record.serial_number || '-', 
+          t: 's' 
+        }
+        
+        // CAL date (คอลัมน์ F)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 5 })] = { 
+          v: record.calibration_date || '-', 
+          t: 's' 
+        }
+        
+        // Due date (คอลัมน์ G)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 6 })] = { 
+          v: record.due_date || '-', 
+          t: 's' 
+        }
+        
+        // Environment - Temp (คอลัมน์ H)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 7 })] = { 
+          v: record.temperature || '-', 
+          t: 's' 
+        }
+        
+        // Environment - Humidity (คอลัมน์ I)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 8 })] = { 
+          v: record.humidity || '-', 
+          t: 's' 
+        }
+        
+        // CAL - Test (คอลัมน์ J)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 9 })] = { 
+          v: record.cal_test || '-', 
+          t: 's' 
+        }
+        
+        // CAL - 1st Re-test (คอลัมน์ K)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 10 })] = { 
+          v: record.cal_first_retest || '-', 
+          t: 's' 
+        }
+        
+        // CAL - 2nd Re-test (คอลัมน์ L)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 11 })] = { 
+          v: record.cal_second_retest || '-', 
+          t: 's' 
+        }
+        
+        // Golden unit (Conductive) - Test (คอลัมน์ M)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 12 })] = { 
+          v: record.golden_conductive_test || '-', 
+          t: 's' 
+        }
+        
+        // Golden unit (Conductive) - 1st Re-test (คอลัมน์ N)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 13 })] = { 
+          v: record.golden_conductive_first_retest || '-', 
+          t: 's' 
+        }
+        
+        // Golden unit (Conductive) - 2nd Re-test (คอลัมน์ O)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 14 })] = { 
+          v: record.golden_conductive_second_retest || '-', 
+          t: 's' 
+        }
+        
+        // Golden unit (Insulative) - Test (คอลัมน์ P)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 15 })] = { 
+          v: record.golden_insulative_test || '-', 
+          t: 's' 
+        }
+        
+        // Golden unit (Insulative) - 1st Re-test (คอลัมน์ Q)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 16 })] = { 
+          v: record.golden_insulative_first_retest || '-', 
+          t: 's' 
+        }
+        
+        // Golden unit (Insulative) - 2nd Re-test (คอลัมน์ R)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 17 })] = { 
+          v: record.golden_insulative_second_retest || '-', 
+          t: 's' 
+        }
+        
+        // By (คอลัมน์ S)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 18 })] = { 
+          v: record.operator_name || '-', 
+          t: 's' 
+        }
+        
+        // at (คอลัมน์ T)
+        ws[XLSX.utils.encode_cell({ r: currentRow - 1, c: 19 })] = { 
+          v: record.test_location || 'CAL Lab', 
+          t: 's' 
+        }
+      })
+
+      // สร้างชื่อไฟล์ตามวันที่ปัจจุบัน
+      const today = new Date().toLocaleDateString('th-TH').replace(/\//g, '-')
+      const fileName = `ESD_Equipment_Record_${today}.xlsx`
+
+      // ส่งออกไฟล์
+      XLSX.writeFile(wb, fileName)
+      toast.success('ส่งออก Excel สำเร็จ')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error('ส่งออก Excel ไม่สำเร็จ: ' + error.message)
+    }
   }
 
   return (
@@ -293,58 +647,47 @@ const TestRecords = () => {
       {/* Test Records List */}
       <div className="card">
         <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>วันที่ทดสอบ</th>
-                <th>อุปกรณ์</th>
-                <th>รุ่น</th>
-                <th>หมายเลขซีเรียล</th>
-                <th>ผลการทดสอบ CAL</th>
-                <th>สถานที่</th>
-                <th>ผู้ดำเนินการ</th>
-                <th className="text-right">การดำเนินการ</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="min-w-full">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่ทดสอบ</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">อุปกรณ์</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">รุ่น</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">หมายเลขซีเรียล</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">สถานที่</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">ผู้ดำเนินการ</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">การดำเนินการ</th>
+                </tr>
+              </thead>
+              <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="8" className="text-center py-8">
+                  <td colSpan="7" className="text-center py-8">
                     <div className="loading-spinner mx-auto" />
                   </td>
                 </tr>
-              ) : testRecords?.length > 0 ? (
-                testRecords.map((record) => (
+              ) : filteredTestRecords?.length > 0 ? (
+                filteredTestRecords.slice(0, 5).map((record) => (
                   <tr key={record.id}>
                     <td>{new Date(record.test_date).toLocaleDateString('th-TH')}</td>
                     <td className="font-medium">{getEquipmentName(record.equipment_id)}</td>
                     <td>{record.model || '-'}</td>
                     <td>{record.serial_number || '-'}</td>
-                    <td>
-                      <div className="text-sm">
-                        <div>Test: {record.cal_test || '-'}</div>
-                        <div>1st: {record.cal_first_retest || '-'}</div>
-                        <div>2nd: {record.cal_second_retest || '-'}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`badge ${record.test_location === 'CAL Lab' ? 'badge-info' : 'badge-warning'}`}>
-                        {record.test_location}
-                      </span>
-                    </td>
-                    <td>{record.operator?.full_name || '-'}</td>
+                    <td>{record.test_location || 'CAL Lab'}</td>
+                    <td>{record.operator_name || '-'}</td>
                     <td className="text-right">
                       <div className="flex justify-end space-x-2">
                         <button
-                          onClick={() => handleEdit(record)}
+                          onClick={() => handleView(record)}
                           className="p-1 text-gray-400 hover:text-primary-600"
-                          title="แก้ไข"
+                          title="ดูรายละเอียด"
                         >
-                          <PencilIcon className="w-4 h-4" />
+                          <EyeIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(record)}
-                          className="p-1 text-gray-400 hover:text-error-600"
+                          className="p-1 text-gray-400 hover:text-red-600"
                           title="ลบ"
                         >
                           <TrashIcon className="w-4 h-4" />
@@ -355,19 +698,20 @@ const TestRecords = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-8 text-gray-500">
+                  <td colSpan="7" className="text-center py-8 text-gray-500">
                     ไม่พบข้อมูลบันทึกการทดสอบ
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
       {/* Add/Edit Modal */}
       {(showAddModal || editingRecord) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
@@ -694,6 +1038,187 @@ const TestRecords = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Record Modal */}
+      {showViewModal && viewingRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  ดูรายละเอียดบันทึกผลการทดสอบ
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false)
+                    setViewingRecord(null)
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Equipment Information */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">ข้อมูลอุปกรณ์</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">อุปกรณ์</label>
+                      <p className="text-gray-900 font-medium">{getEquipmentName(viewingRecord.equipment_id)}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ทดสอบ</label>
+                      <p className="text-gray-900">{new Date(viewingRecord.test_date).toLocaleDateString('th-TH')}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">ยี่ห้อ</label>
+                      <p className="text-gray-900">{viewingRecord.brand || '-'}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">รุ่น</label>
+                      <p className="text-gray-900">{viewingRecord.model || '-'}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">หมายเลขซีเรียล</label>
+                      <p className="text-gray-900">{viewingRecord.serial_number || '-'}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่สอบเทียบ</label>
+                      <p className="text-gray-900">{viewingRecord.calibration_date || '-'}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ครบกำหนด</label>
+                      <p className="text-gray-900">{viewingRecord.due_date || '-'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">อุณหภูมิ (°C)</label>
+                      <p className="text-gray-900">{viewingRecord.temperature || '-'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">ความชื้น (%RH)</label>
+                      <p className="text-gray-900">{viewingRecord.humidity || '-'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">สถานที่ทดสอบ</label>
+                      <p className="text-gray-900">{viewingRecord.test_location || 'CAL Lab'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CAL Test Results */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">ผลการทดสอบ CAL (Ω)</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.cal_test || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">1st Re-test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.cal_first_retest || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">2nd Re-test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.cal_second_retest || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Golden Unit Conductive Test Results */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Golden Unit (Conductive) Test Results (Ω)</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.golden_conductive_test || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">1st Re-test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.golden_conductive_first_retest || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">2nd Re-test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.golden_conductive_second_retest || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Golden Unit Insulative Test Results */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Golden Unit (Insulative) Test Results (Ω)</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.golden_insulative_test || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">1st Re-test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.golden_insulative_first_retest || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">2nd Re-test</label>
+                      <p className="text-gray-900 font-mono">{viewingRecord.golden_insulative_second_retest || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">ข้อมูลเพิ่มเติม</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">ผู้ดำเนินการ</label>
+                      <p className="text-gray-900">{viewingRecord.operator_name || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">สถานะ</label>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        viewingRecord.status === 'pass' 
+                          ? 'bg-green-100 text-green-800' 
+                          : viewingRecord.status === 'fail'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {viewingRecord.status === 'pass' ? 'ผ่าน' : 
+                         viewingRecord.status === 'fail' ? 'ไม่ผ่าน' : 'รอดำเนินการ'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="btn-outline"
+                >
+                  ปิด
+                </button>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false)
+                    handleEdit(viewingRecord)
+                  }}
+                  className="btn-primary"
+                >
+                  แก้ไขข้อมูล
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { equipmentAPI, reportAPI } from '../services/api'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 import { 
   DocumentTextIcon, 
   PlusIcon, 
@@ -14,6 +15,8 @@ import {
 const Reports = () => {
   const [activeTab, setActiveTab] = useState('daily')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [selectedReport, setSelectedReport] = useState(null)
   const [selectedEquipment, setSelectedEquipment] = useState('')
   const [testDate, setTestDate] = useState(new Date().toISOString().split('T')[0])
   const [reportData, setReportData] = useState({
@@ -222,6 +225,54 @@ const Reports = () => {
     createMutation.mutate(data)
   }
 
+  const handleViewReport = (report) => {
+    setSelectedReport(report)
+    setShowViewModal(true)
+  }
+
+  const handleExportExcel = () => {
+    try {
+      // สร้างข้อมูลสำหรับ Excel ตามรูปแบบที่ต้องการ
+      const excelData = reports?.reports?.map((report, index) => ({
+        'ลำดับ': index + 1,
+        'วันที่ทดสอบ': new Date(report.test_date).toLocaleDateString('th-TH'),
+        'อุปกรณ์': getEquipmentName(report.equipment_id),
+        'ผลการทดสอบ CAL': report.status === 'pass' ? 'ผ่าน' : report.status === 'fail' ? 'ไม่ผ่าน' : 'รอดำเนินการ',
+        'สถานที่': '-', // สามารถเพิ่มฟิลด์ location ในข้อมูลได้
+        'ผู้ดำเนินการ': report.operator_name || '-',
+        'หมายเหตุ': report.notes || '-'
+      })) || []
+
+      // สร้าง workbook และ worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'บันทึกผลการทดสอบ')
+
+      // ตั้งค่าความกว้างคอลัมน์
+      const colWidths = [
+        { wch: 8 },   // ลำดับ
+        { wch: 15 },  // วันที่ทดสอบ
+        { wch: 30 },  // อุปกรณ์
+        { wch: 15 },  // ผลการทดสอบ CAL
+        { wch: 20 },  // สถานที่
+        { wch: 20 },  // ผู้ดำเนินการ
+        { wch: 30 }   // หมายเหตุ
+      ]
+      ws['!cols'] = colWidths
+
+      // สร้างชื่อไฟล์ตามวันที่ปัจจุบัน
+      const today = new Date().toLocaleDateString('th-TH').replace(/\//g, '-')
+      const fileName = `บันทึกผลการทดสอบ_${today}.xlsx`
+
+      // ส่งออกไฟล์
+      XLSX.writeFile(wb, fileName)
+      toast.success('ส่งออก Excel สำเร็จ')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error('ส่งออก Excel ไม่สำเร็จ')
+    }
+  }
+
   const getStatusBadge = (status, type = 'default') => {
     const statusConfig = {
       default: {
@@ -260,13 +311,22 @@ const Reports = () => {
           <h1 className="text-2xl font-bold text-gray-900">รายงาน</h1>
           <p className="text-gray-600">จัดการและสร้างรายงานการทดสอบ</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="btn-primary flex items-center"
-        >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          สร้างรายงาน
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={handleExportExcel}
+            className="btn-outline flex items-center"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+            ส่งออก Excel
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="btn-primary flex items-center"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            สร้างรายงาน
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -330,6 +390,7 @@ const Reports = () => {
                     <td className="text-right">
                       <div className="flex justify-end space-x-2">
                         <button
+                          onClick={() => handleViewReport(report)}
                           className="p-1 text-gray-400 hover:text-primary-600"
                           title="ดูรายละเอียด"
                         >
@@ -525,6 +586,167 @@ const Reports = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Report Modal */}
+      {showViewModal && selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    {tabs.find(t => t.id === activeTab)?.name}
+                  </h2>
+                  <h3 className="text-lg text-gray-700">
+                    {getEquipmentName(selectedReport.equipment_id)}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ทดสอบ</label>
+                    <p className="text-gray-900">{new Date(selectedReport.test_date).toLocaleString('th-TH')}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">ผู้ดำเนินการ</label>
+                    <p className="text-gray-900">{selectedReport.operator_name || '-'}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">สถานะ</label>
+                    <div className="mt-1">
+                      {getStatusBadge(selectedReport.status, activeTab === 'iqa' ? 'iqa' : 'default')}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">รหัสรายงาน</label>
+                    <p className="text-gray-900">#{selectedReport.id}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">ประเภทรายงาน</label>
+                    <p className="text-gray-900">{tabs.find(t => t.id === activeTab)?.name}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">วันที่สร้าง</label>
+                    <p className="text-gray-900">{new Date(selectedReport.test_date).toLocaleString('th-TH')}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">หมายเหตุ</label>
+                  <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">
+                    {selectedReport.notes || 'ไม่มีหมายเหตุ'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Additional fields based on report type */}
+              {activeTab === 'byoff' && selectedReport.calibration_check !== undefined && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">การตรวจสอบ By-Off</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedReport.calibration_check || false}
+                        className="mr-2"
+                        disabled
+                      />
+                      <label className="text-sm text-gray-700">ตรวจสอบการสอบเทียบ</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedReport.performance_check || false}
+                        className="mr-2"
+                        disabled
+                      />
+                      <label className="text-sm text-gray-700">ตรวจสอบประสิทธิภาพ</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedReport.safety_check || false}
+                        className="mr-2"
+                        disabled
+                      />
+                      <label className="text-sm text-gray-700">ตรวจสอบความปลอดภัย</label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'iqa' && selectedReport.compliance_score !== undefined && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">ข้อมูลการตรวจสอบ IQA</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">คะแนนความสอดคล้อง</label>
+                      <p className="text-gray-900">{selectedReport.compliance_score || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ตรวจครั้งถัดไป</label>
+                      <p className="text-gray-900">
+                        {selectedReport.next_inspection_date ? 
+                          new Date(selectedReport.next_inspection_date).toLocaleDateString('th-TH') : 
+                          '-'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {selectedReport.findings && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">ข้อค้นพบ</label>
+                      <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">{selectedReport.findings}</p>
+                    </div>
+                  )}
+                  
+                  {selectedReport.recommendations && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">คำแนะนำ</label>
+                      <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">{selectedReport.recommendations}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-3 mt-8">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="btn-outline"
+                >
+                  ปิด
+                </button>
+                <button
+                  className="btn-primary flex items-center"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                  ดาวน์โหลด PDF
+                </button>
+              </div>
             </div>
           </div>
         </div>
