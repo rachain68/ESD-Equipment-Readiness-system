@@ -365,20 +365,34 @@ const TestingInterface = () => {
               </div>
 
               {/* Connection/Testing Controls */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex space-x-3">
                   <button
                     onClick={connectSerialPort}
                     disabled={isConnected}
-                    className={`flex-1 ${isConnected ? 'btn-outline opacity-50 cursor-not-allowed' : 'btn-primary'}`}
+                    className={`flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-200 ${
+                      isConnected 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                        : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                    }`}
                   >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                     {isConnected ? 'เชื่อมต่อแล้ว' : 'เชื่อมต่ออุปกรณ์'}
                   </button>
                   <button
                     onClick={disconnectSerialPort}
                     disabled={!isConnected}
-                    className={`flex-1 ${!isConnected ? 'btn-outline opacity-50 cursor-not-allowed' : 'btn-error'}`}
+                    className={`flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-200 ${
+                      !isConnected 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                        : 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'
+                    }`}
                   >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
                     ตัดการเชื่อมต่อ
                   </button>
                 </div>
@@ -387,17 +401,31 @@ const TestingInterface = () => {
                   <button
                     onClick={handleStartTest}
                     disabled={isTesting || !selectedEquipment || !isConnected}
-                    className={`flex-1 btn-success ${(isTesting || !selectedEquipment || !isConnected) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-200 ${
+                      (isTesting || !selectedEquipment || !isConnected)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                        : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
+                    }`}
                   >
-                    <PlayIcon className="w-4 h-4 mr-2" />
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     เริ่มทดสอบ
                   </button>
                   <button
                     onClick={handleStopTest}
                     disabled={!isTesting}
-                    className={`flex-1 btn-error ${!isTesting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-200 ${
+                      !isTesting 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                        : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500'
+                    }`}
                   >
-                    <StopIcon className="w-4 h-4 mr-2" />
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
                     หยุดทดสอบ
                   </button>
                 </div>
@@ -496,15 +524,20 @@ const TestingInterface = () => {
               <button
                 type="submit"
                 disabled={testMutation.isPending}
-                className="w-full btn-primary"
+                className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 {testMutation.isPending ? (
                   <div className="flex items-center justify-center">
-                    <div className="loading-spinner mr-2" />
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     กำลังบันทึก...
                   </div>
                 ) : (
-                  'บันทึกข้อมูล'
+                  <>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V2" />
+                    </svg>
+                    บันทึกข้อมูล
+                  </>
                 )}
               </button>
             </form>

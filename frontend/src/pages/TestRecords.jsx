@@ -4,6 +4,8 @@ import { equipmentAPI, testRecordsAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -591,6 +593,211 @@ const TestRecords = () => {
     }
   }
 
+  const handleExportPdf = async () => {
+    try {
+      toast.loading('กำลังสร้างไฟล์ PDF...')
+      
+      // กรองข้อมูลตามการค้นหาและวันที่
+      let filteredData = testRecords || []
+      
+      if (searchTerm) {
+        filteredData = filteredData.filter(record => 
+          getEquipmentName(record.equipment_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (record.model && record.model.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (record.serial_number && record.serial_number.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
+      }
+      
+      if (dateFilter) {
+        filteredData = filteredData.filter(record => 
+          record.test_date === dateFilter
+        )
+      }
+
+      // สร้างข้อมูลสำหรับ PDF
+      const pdfData = filteredData.map((record, index) => [
+        index + 1,
+        new Date(record.test_date).toLocaleDateString('th-TH'),
+        getEquipmentName(record.equipment_id),
+        record.brand || '-',
+        record.model || '-',
+        record.serial_number || '-',
+        record.calibration_date || '-',
+        record.due_date || '-',
+        record.temperature || '-',
+        record.humidity || '-',
+        record.test_location || 'CAL Lab',
+        record.operator_name || '-'
+      ])
+
+      // สร้าง PDF
+      const doc = new jsPDF()
+      
+      // เพิ่มฟอนต์ภาษาไทย (ถ้ามี) หรือใช้ฟอนต์ปกติ
+      doc.setFont('helvetica')
+      
+      // หัวข้อ
+      doc.setFontSize(16)
+      doc.text('ESD Equipment Test Records', 14, 20)
+      doc.setFontSize(10)
+      doc.text(`Generated: ${new Date().toLocaleDateString('th-TH')} ${new Date().toLocaleTimeString('th-TH')}`, 14, 28)
+      
+      // สร้างตาราง
+      doc.setFontSize(8)
+      const headers = ['No.', 'Date', 'Equipment', 'Brand', 'Model', 'S/N', 'CAL Date', 'Due Date', 'Temp', 'Humidity', 'Location', 'Operator']
+      const data = pdfData
+      
+      // กำหนดความกว้างคอลัมน์
+      const columnWidths = [10, 20, 35, 20, 20, 20, 20, 20, 15, 15, 20, 25]
+      const startX = 14
+      const startY = 40
+      const rowHeight = 7
+      
+      // วาดหัวตาราง
+      headers.forEach((header, index) => {
+        const x = startX + columnWidths.slice(0, index).reduce((a, b) => a + b, 0)
+        doc.text(header, x, startY)
+      })
+      
+      // วาดข้อมูล
+      data.forEach((row, rowIndex) => {
+        const y = startY + rowHeight * (rowIndex + 1)
+        if (y > 280) { // ขึ้นหน้าใหม่ถ้าเกินขนาด
+          doc.addPage()
+          data.slice(rowIndex).forEach((newRow, newIndex) => {
+            const newY = startY + rowHeight * (newIndex + 1)
+            newRow.forEach((cell, cellIndex) => {
+              const x = startX + columnWidths.slice(0, cellIndex).reduce((a, b) => a + b, 0)
+              doc.text(String(cell).substring(0, 15), x, newY) // จำกัดความยาวข้อความ
+            })
+          })
+          return
+        }
+        
+        row.forEach((cell, cellIndex) => {
+          const x = startX + columnWidths.slice(0, cellIndex).reduce((a, b) => a + b, 0)
+          doc.text(String(cell).substring(0, 15), x, y) // จำกัดความยาวข้อความ
+        })
+      })
+      
+      // สร้างชื่อไฟล์ตามวันที่ปัจจุบัน
+      const today = new Date().toLocaleDateString('th-TH').replace(/\//g, '-')
+      const fileName = `ESD_Equipment_Record_${today}.pdf`
+
+      // บันทึกไฟล์
+      doc.save(fileName)
+      toast.success('ส่งออก PDF สำเร็จ')
+    } catch (error) {
+      console.error('PDF Export error:', error)
+      toast.error('ส่งออก PDF ไม่สำเร็จ: ' + error.message)
+    }
+  }
+
+  const handleExportModalPdf = async () => {
+    try {
+      if (!viewingRecord) return
+      
+      toast.loading('กำลังสร้างไฟล์ PDF...')
+      
+      // สร้าง PDF
+      const doc = new jsPDF()
+      
+      // เพิ่มฟอนต์ภาษาไทย (ถ้ามี) หรือใช้ฟอนต์ปกติ
+      doc.setFont('helvetica')
+      
+      // หัวข้อ
+      doc.setFontSize(16)
+      doc.text('ESD Equipment Test Record Details', 14, 20)
+      doc.setFontSize(10)
+      doc.text(`Generated: ${new Date().toLocaleDateString('th-TH')} ${new Date().toLocaleTimeString('th-TH')}`, 14, 28)
+      
+      let yPosition = 40
+      
+      // ข้อมูลอุปกรณ์
+      doc.setFontSize(12)
+      doc.text('Equipment Information:', 14, yPosition)
+      yPosition += 8
+      doc.setFontSize(9)
+      
+      const equipmentInfo = [
+        `Equipment: ${getEquipmentName(viewingRecord.equipment_id)}`,
+        `Test Date: ${new Date(viewingRecord.test_date).toLocaleDateString('th-TH')}`,
+        `Brand: ${viewingRecord.brand || '-'}`,
+        `Model: ${viewingRecord.model || '-'}`,
+        `Serial Number: ${viewingRecord.serial_number || '-'}`,
+        `Calibration Date: ${viewingRecord.calibration_date || '-'}`,
+        `Due Date: ${viewingRecord.due_date || '-'}`,
+        `Temperature: ${viewingRecord.temperature || '-'}°C`,
+        `Humidity: ${viewingRecord.humidity || '-'}%RH`,
+        `Test Location: ${viewingRecord.test_location || 'CAL Lab'}`
+      ]
+      
+      equipmentInfo.forEach(info => {
+        doc.text(info, 20, yPosition)
+        yPosition += 6
+      })
+      
+      yPosition += 8
+      
+      // ผลการทดสอบ CAL
+      doc.setFontSize(12)
+      doc.text('CAL Test Results (Ω):', 14, yPosition)
+      yPosition += 8
+      doc.setFontSize(9)
+      doc.text(`Test: ${viewingRecord.cal_test || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`1st Re-test: ${viewingRecord.cal_first_retest || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`2nd Re-test: ${viewingRecord.cal_second_retest || '-'}`, 20, yPosition)
+      yPosition += 8
+      
+      // Golden Unit Conductive
+      doc.setFontSize(12)
+      doc.text('Golden Unit (Conductive) Test Results (Ω):', 14, yPosition)
+      yPosition += 8
+      doc.setFontSize(9)
+      doc.text(`Test: ${viewingRecord.golden_conductive_test || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`1st Re-test: ${viewingRecord.golden_conductive_first_retest || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`2nd Re-test: ${viewingRecord.golden_conductive_second_retest || '-'}`, 20, yPosition)
+      yPosition += 8
+      
+      // Golden Unit Insulative
+      doc.setFontSize(12)
+      doc.text('Golden Unit (Insulative) Test Results (Ω):', 14, yPosition)
+      yPosition += 8
+      doc.setFontSize(9)
+      doc.text(`Test: ${viewingRecord.golden_insulative_test || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`1st Re-test: ${viewingRecord.golden_insulative_first_retest || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`2nd Re-test: ${viewingRecord.golden_insulative_second_retest || '-'}`, 20, yPosition)
+      yPosition += 8
+      
+      // ข้อมูลเพิ่มเติม
+      doc.setFontSize(12)
+      doc.text('Additional Information:', 14, yPosition)
+      yPosition += 8
+      doc.setFontSize(9)
+      doc.text(`Operator: ${viewingRecord.operator_name || '-'}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`Status: ${viewingRecord.status === 'pass' ? 'ผ่าน' : viewingRecord.status === 'fail' ? 'ไม่ผ่าน' : 'รอดำเนินการ'}`, 20, yPosition)
+      
+      // สร้างชื่อไฟล์
+      const today = new Date().toLocaleDateString('th-TH').replace(/\//g, '-')
+      const equipmentName = getEquipmentName(viewingRecord.equipment_id).replace(/[^a-zA-Z0-9]/g, '_')
+      const fileName = `ESD_TestRecord_${equipmentName}_${today}.pdf`
+
+      // บันทึกไฟล์
+      doc.save(fileName)
+      toast.success('ส่งออก PDF สำเร็จ')
+    } catch (error) {
+      console.error('Modal PDF Export error:', error)
+      toast.error('ส่งออก PDF ไม่สำเร็จ: ' + error.message)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -598,22 +805,6 @@ const TestRecords = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">บันทึกผลการทดสอบ</h1>
           <p className="text-gray-600">บันทึกผลการทดสอบการสอบเทียบเครื่องวัดค่าความต้านทาน</p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={handleExportExcel}
-            className="btn-outline flex items-center"
-          >
-            <DocumentArrowDownIcon className="w-4 h-4 mr-2" />
-            ส่งออก Excel
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center"
-          >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            บันทึกผลการทดสอบ
-          </button>
         </div>
       </div>
 
@@ -1049,9 +1240,11 @@ const TestRecords = () => {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  ดูรายละเอียดบันทึกผลการทดสอบ
-                </h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    ดูรายละเอียดบันทึกผลการทดสอบ
+                  </h2>
+                </div>
                 <button
                   onClick={() => {
                     setShowViewModal(false)
@@ -1069,14 +1262,15 @@ const TestRecords = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">ข้อมูลอุปกรณ์</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ทดสอบ</label>
+                      <p className="text-gray-900">{new Date(viewingRecord.test_date).toLocaleDateString('th-TH')}</p>
+                    </div>
+
+                    <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">อุปกรณ์</label>
                       <p className="text-gray-900 font-medium">{getEquipmentName(viewingRecord.equipment_id)}</p>
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ทดสอบ</label>
-                      <p className="text-gray-900">{new Date(viewingRecord.test_date).toLocaleDateString('th-TH')}</p>
-                    </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">ยี่ห้อ</label>
@@ -1099,7 +1293,7 @@ const TestRecords = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ครบกำหนด</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ครบกำหนดสอบเทียบ</label>
                       <p className="text-gray-900">{viewingRecord.due_date || '-'}</p>
                     </div>
 
@@ -1116,6 +1310,75 @@ const TestRecords = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">สถานที่ทดสอบ</label>
                       <p className="text-gray-900">{viewingRecord.test_location || 'CAL Lab'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* General Requirement */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">General Requirement</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      • Shall perform ESD equipment Buy-off at CAL Lab<br/>
+                      • and perform ESD equipment Verification in the field
+                    </p>
+                  </div>
+                </div>
+
+                {/* Environment Control */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Environment Control</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      • Refer to Environment Control Procedure 003-000-000125<br/>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Specification of CAL */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Specification of CAL, Ready to take measurements</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Calibration Equipment</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Specification</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Eqipment Name</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        <tr>
+                          <td className="px-4 py-2 text-sm text-gray-900">Calibration shunt : </td>
+                          <td className="px-4 py-2 text-sm text-gray-900">1.02 ± 0.02 ohms (1.00-1.04 Ohms)</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">for Brand Prostat, Model PRS-801</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-sm text-gray-900">Test Lead Shunt : </td>
+                          <td className="px-4 py-2 text-sm text-gray-900">&lt; 0.35 ohms</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">for Brand Prostat, Model PRS-801B</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-sm text-gray-900">Ready to take measurements : </td>
+                          <td className="px-4 py-2 text-sm text-gray-900">Display show "Go"</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">for Brand Prostat, Model PAS-853</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Specification of Golden unit */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Specification of Golden unit for Verification</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <ul className="text-sm text-gray-700 space-y-1">
+                            <li>• Conductive Range :  &lt; 1.0 x 10<sup>3</sup> Ohms</li>
+                            <li>• Insulative Range :  &gt; 1.0 x 10<sup>11</sup> Ohms</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1202,19 +1465,26 @@ const TestRecords = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
                 <button
                   onClick={() => setShowViewModal(false)}
-                  className="btn-outline"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   ปิด
+                </button>
+                <button
+                  onClick={handleExportModalPdf}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <DocumentArrowDownIcon className="w-4 h-4 mr-2" />
+                  ส่งออก PDF
                 </button>
                 <button
                   onClick={() => {
                     setShowViewModal(false)
                     handleEdit(viewingRecord)
                   }}
-                  className="btn-primary"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   แก้ไขข้อมูล
                 </button>
