@@ -27,6 +27,7 @@ const TestRecords = () => {
   const [editingRecord, setEditingRecord] = useState(null)
   const [viewingRecord, setViewingRecord] = useState(null)
   const [formData, setFormData] = useState({
+    test_type: 'daily_check',
     equipment_id: '',
     test_date: new Date().toISOString().split('T')[0],
     brand: '',
@@ -346,6 +347,7 @@ const TestRecords = () => {
 
   const resetForm = () => {
     setFormData({
+      test_type: 'daily_check',
       equipment_id: '',
       test_date: new Date().toISOString().split('T')[0],
       brand: '',
@@ -386,6 +388,7 @@ const TestRecords = () => {
   const handleEdit = (record) => {
     setEditingRecord(record)
     setFormData({
+      test_type: record.test_type || 'daily_check',
       equipment_id: record.equipment_id.toString(),
       test_date: record.test_date,
       brand: record.brand || '',
@@ -806,6 +809,13 @@ const TestRecords = () => {
           <h1 className="text-2xl font-bold text-gray-900">บันทึกผลการทดสอบ</h1>
           <p className="text-gray-600">บันทึกผลการทดสอบการสอบเทียบเครื่องวัดค่าความต้านทาน</p>
         </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <PlusIcon className="w-4 h-4 mr-2" />
+          เพิ่มบันทึกการทดสอบ
+        </button>
       </div>
 
       {/* Filters */}
@@ -843,6 +853,7 @@ const TestRecords = () => {
               <thead>
                 <tr>
                   <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่ทดสอบ</th>
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทการทดสอบ</th>
                   <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">อุปกรณ์</th>
                   <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">รุ่น</th>
                   <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">หมายเลขซีเรียล</th>
@@ -854,7 +865,7 @@ const TestRecords = () => {
               <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-8">
+                  <td colSpan="8" className="text-center py-8">
                     <div className="loading-spinner mx-auto" />
                   </td>
                 </tr>
@@ -862,6 +873,16 @@ const TestRecords = () => {
                 filteredTestRecords.slice(0, 5).map((record) => (
                   <tr key={record.id}>
                     <td>{new Date(record.test_date).toLocaleDateString('th-TH')}</td>
+                    <td>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {record.test_type === 'daily_check' && 'การทดสอบเช็คประจำวัน'}
+                        {record.test_type === 'cal_test' && 'CAL Test'}
+                        {record.test_type === 'golden_conductive' && 'Golden Unit (Conductive)'}
+                        {record.test_type === 'golden_insulative' && 'Golden Unit (Insulative)'}
+                        {record.test_type === 'full_test' && 'การทดสอบทั้งหมด'}
+                        {!record.test_type && 'การทดสอบเช็คประจำวัน'}
+                      </span>
+                    </td>
                     <td className="font-medium">{getEquipmentName(record.equipment_id)}</td>
                     <td>{record.model || '-'}</td>
                     <td>{record.serial_number || '-'}</td>
@@ -889,7 +910,7 @@ const TestRecords = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-8 text-gray-500">
+                  <td colSpan="8" className="text-center py-8 text-gray-500">
                     ไม่พบข้อมูลบันทึกการทดสอบ
                   </td>
                 </tr>
@@ -1063,143 +1084,169 @@ const TestRecords = () => {
                   </div>
                 </div>
 
-                {/* CAL Test Results */}
+                {/* Test Type Selection */}
                 <div className="border-b pb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">ผลการทดสอบ CAL (Ω)</h3>
-                  <div className="grid grid-cols-3 gap-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">ประเภทการทดสอบ</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Test
+                        ประเภทการทดสอบ *
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.cal_test}
-                        onChange={(e) => setFormData({...formData, cal_test: e.target.value})}
+                      <select
+                        value={formData.test_type}
+                        onChange={(e) => setFormData({...formData, test_type: e.target.value})}
                         className="input"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        1st Re-test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.cal_first_retest}
-                        onChange={(e) => setFormData({...formData, cal_first_retest: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        2nd Re-test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.cal_second_retest}
-                        onChange={(e) => setFormData({...formData, cal_second_retest: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
+                        required
+                      >
+                        <option value="daily_check">การทดสอบเช็คประจำวัน</option>
+                      </select>
                     </div>
                   </div>
                 </div>
+
+                {/* CAL Test Results */}
+                {(formData.test_type === 'daily_check' || formData.test_type === 'cal_test' || formData.test_type === 'full_test') && (
+                  <div className="border-b pb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">ผลการทดสอบ CAL (Ω)</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.cal_test}
+                          onChange={(e) => setFormData({...formData, cal_test: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          1st Re-test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.cal_first_retest}
+                          onChange={(e) => setFormData({...formData, cal_first_retest: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          2nd Re-test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.cal_second_retest}
+                          onChange={(e) => setFormData({...formData, cal_second_retest: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Golden Unit Conductive Test Results */}
-                <div className="border-b pb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Golden Unit (Conductive) Test Results (Ω)</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.golden_conductive_test}
-                        onChange={(e) => setFormData({...formData, golden_conductive_test: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        1st Re-test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.golden_conductive_first_retest}
-                        onChange={(e) => setFormData({...formData, golden_conductive_first_retest: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        2nd Re-test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.golden_conductive_second_retest}
-                        onChange={(e) => setFormData({...formData, golden_conductive_second_retest: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
+                {(formData.test_type === 'daily_check' || formData.test_type === 'golden_conductive' || formData.test_type === 'full_test') && (
+                  <div className="border-b pb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Golden Unit (Conductive) Test Results (Ω)</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.golden_conductive_test}
+                          onChange={(e) => setFormData({...formData, golden_conductive_test: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          1st Re-test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.golden_conductive_first_retest}
+                          onChange={(e) => setFormData({...formData, golden_conductive_first_retest: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          2nd Re-test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.golden_conductive_second_retest}
+                          onChange={(e) => setFormData({...formData, golden_conductive_second_retest: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Golden Unit Insulative Test Results */}
-                <div className="pb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Golden Unit (Insulative) Test Results (Ω)</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.golden_insulative_test}
-                        onChange={(e) => setFormData({...formData, golden_insulative_test: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        1st Re-test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.golden_insulative_first_retest}
-                        onChange={(e) => setFormData({...formData, golden_insulative_first_retest: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        2nd Re-test
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.golden_insulative_second_retest}
-                        onChange={(e) => setFormData({...formData, golden_insulative_second_retest: e.target.value})}
-                        className="input"
-                        placeholder="0.00"
-                      />
+                {(formData.test_type === 'daily_check' || formData.test_type === 'golden_insulative' || formData.test_type === 'full_test') && (
+                  <div className="pb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Golden Unit (Insulative) Test Results (Ω)</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.golden_insulative_test}
+                          onChange={(e) => setFormData({...formData, golden_insulative_test: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          1st Re-test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.golden_insulative_first_retest}
+                          onChange={(e) => setFormData({...formData, golden_insulative_first_retest: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          2nd Re-test
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.golden_insulative_second_retest}
+                          onChange={(e) => setFormData({...formData, golden_insulative_second_retest: e.target.value})}
+                          className="input"
+                          placeholder="0.00"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
                 
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
@@ -1209,14 +1256,14 @@ const TestRecords = () => {
                       setEditingRecord(null)
                       resetForm()
                     }}
-                    className="btn-outline"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
                     disabled={createMutation.isPending || updateMutation.isPending}
-                    className="btn-primary"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     {createMutation.isPending || updateMutation.isPending ? (
                       <div className="flex items-center">

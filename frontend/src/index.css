@@ -43,6 +43,16 @@
   .btn-outline {
     @apply bg-white/20 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/50 focus:ring-white;
   }
+
+  .btn-cancel {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    @apply text-white hover:shadow-xl focus:ring-gray-500 shadow-lg;
+  }
+
+  .btn-save {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    @apply text-white hover:shadow-xl focus:ring-green-600 shadow-lg;
+  }
   
   .card {
     background: rgba(255, 255, 255, 0.95);
