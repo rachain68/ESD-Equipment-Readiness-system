@@ -1,16 +1,16 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { equipmentAPI, testAPI, reportAPI } from '../services/api'
+import { equipmentAPI, testRecordsAPI, reportAPI } from '../services/api'
 import { 
   WrenchScrewdriverIcon, 
-  BeakerIcon, 
-  DocumentTextIcon,
+  BeakerIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline'
 
-const StatCard = ({ title, value, icon: Icon, color = 'primary' }) => {
+const StatCard = ({ title, value, icon: Icon, color = 'primary', to }) => {
   const colorClasses = {
     primary: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
     success: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
@@ -18,8 +18,8 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary' }) => {
     error: 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
   }
 
-  return (
-    <div className="card p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+  const card = (
+    <div className="card p-6 flex flex-col justify-between h-36 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
@@ -31,6 +31,14 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary' }) => {
       </div>
     </div>
   )
+
+  if (to) {
+    return (
+      <Link to={to} className="block w-full hover:cursor-pointer">{card}</Link>
+    )
+  }
+
+  return <div className="w-full">{card}</div>
 }
 
 const Dashboard = () => {
@@ -47,7 +55,7 @@ const Dashboard = () => {
   // ดึงข้อมูลสถิติการทดสอบ (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: testStats, isLoading: testLoading } = useQuery({
     queryKey: ['test-stats'],
-    queryFn: () => testAPI.getStats().then(res => res.data),
+    queryFn: () => testRecordsAPI.getStats().then(res => res.data),
     retry: false,
     refetchInterval: false,
     staleTime: Infinity,
@@ -67,7 +75,7 @@ const Dashboard = () => {
   // ดึงข้อมูลการทดสอบล่าสุด (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: latestTests, isLoading: latestLoading } = useQuery({
     queryKey: ['latest-tests'],
-    queryFn: () => testAPI.getLatest({ limit: 5 }).then(res => res.data),
+    queryFn: () => testRecordsAPI.getAll({ limit: 5 }).then(res => res.data),
     retry: false,
     refetchInterval: false,
     staleTime: Infinity,
@@ -130,45 +138,42 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">แดชบอร์ด</h1>
         <p className="text-gray-600">ภาพรวมสถานะระบบทดสอบเครื่องวัดค่าความต้านทาน</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Stats Grid - single row on md+ screens */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatCard
           title="อุปกรณ์ทั้งหมด"
           value={stats.total || 0}
           icon={WrenchScrewdriverIcon}
           color="primary"
+          to="/equipment"
         />
         <StatCard
           title="อุปกรณ์ที่ใช้งานได้"
           value={stats.active || 0}
           icon={CheckCircleIcon}
           color="success"
+          to="/equipment"
         />
         <StatCard
           title="การทดสอบทั้งหมด"
           value={tests.total || 0}
           icon={BeakerIcon}
           color="primary"
-        />
-        <StatCard
-          title="รายงานทั้งหมด"
-          value={reports.total || 0}
-          icon={DocumentTextIcon}
-          color="secondary"
+          to="/test-records-and-reports"
         />
       </div>
 
       {/* Charts and Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         {/* Test Status */}
-        <div className="card p-6">
+        <div className="card p-6 h-full">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">สถานะการทดสอบ</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
@@ -230,7 +235,7 @@ const Dashboard = () => {
         </div>
 
         {/* Latest Tests */}
-        <div className="card">
+        <div className="card p-6 h-full">
           <div className="card-header">
             <h3 className="text-lg font-medium text-gray-900">การทดสอบล่าสุด</h3>
           </div>
@@ -268,61 +273,63 @@ const Dashboard = () => {
       </div>
 
       {/* Report Summary */}
-      <div className="card">
+      <div className="card mt-4">
         <div className="card-header">
           <h3 className="text-lg font-medium text-gray-900">สรุปรายงาน</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">รายงานประจำวัน</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>ทั้งหมด:</span>
-                <span className="font-semibold">{reportSummary?.daily?.total || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>ผ่าน:</span>
-                <span className="font-semibold text-success-600">{reportSummary?.daily?.pass || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>ไม่ผ่าน:</span>
-                <span className="font-semibold text-error-600">{reportSummary?.daily?.fail || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">รายงาน By-Off</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>ทั้งหมด:</span>
-                <span className="font-semibold">{reportSummary?.byOff?.total || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>ผ่าน:</span>
-                <span className="font-semibold text-success-600">{reportSummary?.byOff?.pass || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>ไม่ผ่าน:</span>
-                <span className="font-semibold text-error-600">{reportSummary?.byOff?.fail || 0}</span>
+        <div className="card-body">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-left">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">รายงานประจำวัน</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>ทั้งหมด:</span>
+                  <span className="font-semibold">{reportSummary?.daily?.total || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>ผ่าน:</span>
+                  <span className="font-semibold text-success-600">{reportSummary?.daily?.pass || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>ไม่ผ่าน:</span>
+                  <span className="font-semibold text-error-600">{reportSummary?.daily?.fail || 0}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="text-center">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">รายงาน IQA</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>ทั้งหมด:</span>
-                <span className="font-semibold">{reportSummary?.iqa?.total || 0}</span>
+            <div className="text-left">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">รายงาน By-Off</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>ทั้งหมด:</span>
+                  <span className="font-semibold">{reportSummary?.byOff?.total || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>ผ่าน:</span>
+                  <span className="font-semibold text-success-600">{reportSummary?.byOff?.pass || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>ไม่ผ่าน:</span>
+                  <span className="font-semibold text-error-600">{reportSummary?.byOff?.fail || 0}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>อนุมัติ:</span>
-                <span className="font-semibold text-success-600">{reportSummary?.iqa?.approved || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>ปฏิเสธ:</span>
-                <span className="font-semibold text-error-600">{reportSummary?.iqa?.rejected || 0}</span>
+            </div>
+
+            <div className="text-left">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">รายงาน IQA</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>ทั้งหมด:</span>
+                  <span className="font-semibold">{reportSummary?.iqa?.total || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>อนุมัติ:</span>
+                  <span className="font-semibold text-success-600">{reportSummary?.iqa?.approved || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>ปฏิเสธ:</span>
+                  <span className="font-semibold text-error-600">{reportSummary?.iqa?.rejected || 0}</span>
+                </div>
               </div>
             </div>
           </div>
