@@ -17,19 +17,6 @@ const AuthProviderComponent = ({ children }) => {
 
   // ตรวจสอบสถานะการล็อกอินเมื่อโหลดแอป
   useEffect(() => {
-    // ตัดการตรวจสอบการล็อกอินชั่วคราว
-    setLoading(false)
-    
-    // เพิ่มข้อมูลผู้ใช้จำลองเพื่อทดสอบ
-    setUser({
-      id: 1,
-      username: 'admin',
-      email: 'admin@esd.com',
-      role: 'admin',
-      full_name: 'System Administrator'
-    })
-    
-    /*
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token')
@@ -45,15 +32,7 @@ const AuthProviderComponent = ({ children }) => {
       }
     }
 
-    // ตั้ง timeout ป้องกันการ loading ค้าง
-    const timeout = setTimeout(() => {
-      setLoading(false)
-    }, 3000)
-
     checkAuth()
-    
-    return () => clearTimeout(timeout)
-    */
   }, [])
 
   const login = async (credentials) => {

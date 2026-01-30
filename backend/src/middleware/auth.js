@@ -14,7 +14,7 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
     // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
-    const user = await User.findByPk(decoded.userId, {
+    const user = await User.findByPk(decoded.id, {
       attributes: ['id', 'username', 'full_name', 'email', 'role']
     });
 

@@ -54,16 +54,6 @@ export const equipmentAPI = {
   getStats: () => api.get('/equipment/stats'),
 }
 
-// Test APIs (ใช้สำหรับการทดสอบแบบเก่า - อาจจะเลิกใช้)
-export const testAPI = {
-  getAll: (params) => api.get('/test-records', { params }),
-  getById: (id) => api.get(`/test-records/${id}`),
-  create: (data) => api.post('/test-records', data),
-  update: (id, data) => api.put(`/test-records/${id}`, data),
-  delete: (id) => api.delete(`/test-records/${id}`),
-  getStats: (params) => api.get('/test-records/stats', { params }),
-  getLatest: (params) => api.get('/test-records/latest', { params }),
-}
 
 // Report APIs
 export const reportAPI = {
@@ -90,6 +80,7 @@ export const testRecordsAPI = {
   create: (data) => api.post('/test-records', data),
   update: (id, data) => api.put(`/test-records/${id}`, data),
   delete: (id) => api.delete(`/test-records/${id}`),
+  getStats: (params) => api.get('/test-records/stats', { params }),
   exportExcel: (params) => api.get('/test-records/export/excel', { params }),
 }
 

@@ -20,7 +20,12 @@ const { sequelize } = require('./src/utils/database');
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,6 +39,7 @@ app.use('/api/', limiter);
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/equipment', require('./src/routes/equipment'));
+app.use('/api/tests', require('./src/routes/tests'));
 app.use('/api/reports', require('./src/routes/reports'));
 app.use('/api/test-records', require('./src/routes/testRecords'));
 

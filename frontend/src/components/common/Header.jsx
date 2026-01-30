@@ -5,15 +5,13 @@ import {
   WrenchScrewdriverIcon, 
   BeakerIcon,
   DocumentTextIcon,
-  ClipboardDocumentListIcon,
-  Cog6ToothIcon,
   UserIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const Header = () => {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -21,9 +19,7 @@ const Header = () => {
     { name: 'แดชบอร์ด', href: '/dashboard', icon: HomeIcon },
     { name: 'อุปกรณ์', href: '/equipment', icon: WrenchScrewdriverIcon },
     { name: 'การทดสอบ', href: '/testing', icon: BeakerIcon },
-    { name: 'บันทึกผลการทดสอบ', href: '/test-records', icon: ClipboardDocumentListIcon },
-    { name: 'รายงาน', href: '/reports', icon: DocumentTextIcon },
-    ...(isAdmin ? [{ name: 'ตั้งค่า', href: '/settings', icon: Cog6ToothIcon }] : [])
+    { name: 'บันทึกผลการทดสอบและรายงาน', href: '/test-records-and-reports', icon: DocumentTextIcon }
   ]
 
   const handleLogout = () => {

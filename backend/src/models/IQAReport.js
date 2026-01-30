@@ -86,10 +86,4 @@ const IQAReport = sequelize.define('IQAReport', {
   ]
 });
 
-// กำหนดความสัมพันธ์
-IQAReport.belongsTo(Equipment, { foreignKey: 'equipment_id', as: 'equipment' });
-IQAReport.belongsTo(User, { foreignKey: 'inspector_id', as: 'inspector' });
-Equipment.hasMany(IQAReport, { foreignKey: 'equipment_id', as: 'iqaReports' });
-User.hasMany(IQAReport, { foreignKey: 'inspector_id', as: 'iqaReports' });
-
 module.exports = IQAReport;

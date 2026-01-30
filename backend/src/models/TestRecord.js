@@ -93,6 +93,10 @@ const TestRecord = sequelize.define('TestRecord', {
     type: DataTypes.ENUM('CAL Lab', 'Field'),
     defaultValue: 'CAL Lab'
   },
+  test_status: {
+    type: DataTypes.ENUM('pass', 'fail', 'pending'),
+    defaultValue: 'pending'
+  },
   operator_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -107,11 +111,5 @@ const TestRecord = sequelize.define('TestRecord', {
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });
-
-// กำหนดความสัมพันธ์
-TestRecord.belongsTo(Equipment, { foreignKey: 'equipment_id', as: 'equipment' });
-TestRecord.belongsTo(User, { foreignKey: 'operator_id', as: 'operator' });
-Equipment.hasMany(TestRecord, { foreignKey: 'equipment_id', as: 'testRecords' });
-User.hasMany(TestRecord, { foreignKey: 'operator_id', as: 'testRecords' });
 
 module.exports = TestRecord;

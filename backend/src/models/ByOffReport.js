@@ -74,10 +74,4 @@ const ByOffReport = sequelize.define('ByOffReport', {
   ]
 });
 
-// กำหนดความสัมพันธ์
-ByOffReport.belongsTo(Equipment, { foreignKey: 'equipment_id', as: 'equipment' });
-ByOffReport.belongsTo(User, { foreignKey: 'operator_id', as: 'operator' });
-Equipment.hasMany(ByOffReport, { foreignKey: 'equipment_id', as: 'byOffReports' });
-User.hasMany(ByOffReport, { foreignKey: 'operator_id', as: 'byOffReports' });
-
 module.exports = ByOffReport;

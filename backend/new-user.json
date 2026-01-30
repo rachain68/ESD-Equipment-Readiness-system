@@ -1,0 +1,7 @@
+{
+  "username": "testuser",
+  "email": "test@esd.com",
+  "password": "test123",
+  "full_name": "Test User",
+  "role": "operator"
+}

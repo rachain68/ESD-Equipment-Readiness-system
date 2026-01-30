@@ -7,6 +7,7 @@ import EquipmentManagement from './pages/EquipmentManagement'
 import TestingInterface from './pages/TestingInterface'
 import TestRecords from './pages/TestRecords'
 import Reports from './pages/Reports'
+import TestRecordsAndReports from './pages/TestRecordsAndReports'
 import Settings from './pages/Settings'
 import LoadingSpinner from './components/common/LoadingSpinner'
 
@@ -84,6 +85,16 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <TestingInterface />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/test-records-and-reports"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <TestRecordsAndReports />
               </Layout>
             </ProtectedRoute>
           }

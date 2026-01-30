@@ -23,9 +23,7 @@ const createTestRecord = async (req, res) => {
       golden_insulative_test,
       golden_insulative_first_retest,
       golden_insulative_second_retest,
-      test_location = 'CAL Lab',
-      notes,
-      test_status = 'pending'
+      test_location = 'CAL Lab'
     } = req.body;
 
     // ตรวจสอบว่ามีอุปกรณ์นี้อยู่จริง
@@ -54,9 +52,7 @@ const createTestRecord = async (req, res) => {
       golden_insulative_first_retest: golden_insulative_first_retest ? parseFloat(golden_insulative_first_retest) : null,
       golden_insulative_second_retest: golden_insulative_second_retest ? parseFloat(golden_insulative_second_retest) : null,
       test_location,
-      operator_id: req.user?.id || null,
-      notes,
-      test_status
+      operator_id: req.user?.id || null
     });
 
     // ส่งข้อมูลการทดสอบไปยัง clients ที่เชื่อมต่ออยู่ (real-time)

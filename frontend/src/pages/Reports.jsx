@@ -43,75 +43,18 @@ const Reports = () => {
 
   const queryClient = useQueryClient()
 
-  // ข้อมูลจำลองเพื่อทดสอบ (ไม่ต้องดึงจาก backend)
-  const mockEquipmentData = [
-    { id: 1, name: 'Digital Multimeter FLUKE 87-V', model: 'FLUKE-87V' },
-    { id: 2, name: 'Insulation Resistance Tester MEGGER', model: 'MIT-510' },
-    { id: 3, name: 'Earth Ground Resistance Tester', model: 'FLUKE-1623' },
-    { id: 4, name: 'Clamp Meter', model: 'FLUKE-376' }
-  ]
-
-  const mockReportsData = {
-    daily: {
-      reports: [
-        {
-          id: 1,
-          equipment_id: 1,
-          equipment_name: 'Digital Multimeter FLUKE 87-V',
-          test_date: '2024-01-25T10:30:00Z',
-          operator_name: 'John Doe',
-          status: 'pass',
-          notes: 'Test completed successfully'
-        },
-        {
-          id: 2,
-          equipment_id: 2,
-          equipment_name: 'Insulation Resistance Tester MEGGER',
-          test_date: '2024-01-25T09:15:00Z',
-          operator_name: 'Jane Smith',
-          status: 'pass',
-          notes: 'All parameters within limits'
-        }
-      ]
-    },
-    byoff: {
-      reports: [
-        {
-          id: 1,
-          equipment_id: 1,
-          equipment_name: 'Digital Multimeter FLUKE 87-V',
-          test_date: '2024-01-25T10:30:00Z',
-          operator_name: 'John Doe',
-          status: 'pass',
-          notes: 'BYOFF test completed'
-        }
-      ]
-    },
-    iqa: {
-      reports: [
-        {
-          id: 1,
-          equipment_id: 1,
-          equipment_name: 'Digital Multimeter FLUKE 87-V',
-          test_date: '2024-01-25T10:30:00Z',
-          operator_name: 'John Doe',
-          status: 'pass',
-          notes: 'IQA inspection completed'
-        }
-      ]
-    }
-  }
+  // Use backend data; remove local mock data
 
   // ดึงข้อมูลอุปกรณ์ทั้งหมด (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: equipmentData } = useQuery({
     queryKey: ['equipment-all'],
-    queryFn: () => equipmentAPI.getAll().then(res => res.data),
+    queryFn: () => equipmentAPI.getAll().then(res => res.data?.equipment || res.data || []),
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ดึงข้อมูลรายงานตามประเภท (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
@@ -131,15 +74,15 @@ const Reports = () => {
     },
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
-  const equipment = equipmentData || mockEquipmentData
-  const reports = reportsData || mockReportsData[activeTab] || { reports: [] }
+  const equipment = equipmentData || []
+  const reports = reportsData || { reports: [] }
 
   // สร้างรายงาน
   const createMutation = useMutation({

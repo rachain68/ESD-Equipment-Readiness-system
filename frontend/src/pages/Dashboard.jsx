@@ -49,7 +49,7 @@ const Dashboard = () => {
     retry: false,
     refetchInterval: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ดึงข้อมูลสถิติการทดสอบ (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
@@ -59,7 +59,7 @@ const Dashboard = () => {
     retry: false,
     refetchInterval: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ดึงข้อมูลสรุปรายงาน (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
@@ -69,65 +69,27 @@ const Dashboard = () => {
     retry: false,
     refetchInterval: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ดึงข้อมูลการทดสอบล่าสุด (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: latestTests, isLoading: latestLoading } = useQuery({
     queryKey: ['latest-tests'],
-    queryFn: () => testRecordsAPI.getAll({ limit: 5 }).then(res => res.data),
+    queryFn: () => testRecordsAPI.getAll({ limit: 5 }).then(res => res.data?.test_records || res.data || []),
     retry: false,
     refetchInterval: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // แสดง loading state แค่ครั้งเดียว
   const isLoading = equipmentLoading || testLoading || reportLoading || latestLoading
   
-  // ข้อมูลจำลองเพื่อทดสอบ (ไม่ต้องดึงจาก backend)
-  const mockData = {
-    equipmentStats: {
-      total: 4,
-      active: 3,
-      maintenance: 1,
-      retired: 0
-    },
-    testStats: {
-      total: 12,
-      pass: 10,
-      fail: 1,
-      pending: 1
-    },
-    reportSummary: {
-      total: 8,
-      approved: 5,
-      rejected: 1,
-      pending: 2
-    },
-    latestTests: [
-      {
-        id: 1,
-        equipment_name: 'Digital Multimeter FLUKE 87-V',
-        cal_test: 1000.5,
-        status: 'pass',
-        test_date: '2024-01-25T10:30:00Z'
-      },
-      {
-        id: 2,
-        equipment_name: 'Insulation Resistance Tester MEGGER',
-        cal_test: 1500.2,
-        status: 'pass',
-        test_date: '2024-01-25T09:15:00Z'
-      }
-    ]
-  }
-  
-  // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
-  const stats = equipmentStats || mockData.equipmentStats
-  const tests = testStats || mockData.testStats
-  const reports = reportSummary || mockData.reportSummary
-  const latest = latestTests || mockData.latestTests
+  // Use backend data; fallback to sensible defaults
+  const stats = equipmentStats || { total: 0, active: 0, maintenance: 0, retired: 0 }
+  const tests = testStats || { total: 0, pass: 0, fail: 0, pending: 0 }
+  const reports = reportSummary || { total: 0, approved: 0, rejected: 0, pending: 0 }
+  const latest = latestTests || []
   
   if (isLoading) {
     return (

@@ -51,227 +51,18 @@ const TestRecords = () => {
 
   const queryClient = useQueryClient()
 
-  // ข้อมูลจำลองเพื่อทดสอบ (ไม่ต้องดึงจาก backend)
-  const mockEquipmentData = [
-    { id: 1, name: 'Digital Multimeter FLUKE 87-V', model: 'FLUKE-87V' },
-    { id: 2, name: 'Insulation Resistance Tester MEGGER', model: 'MIT-510' },
-    { id: 3, name: 'Earth Ground Resistance Tester', model: 'FLUKE-1623' },
-    { id: 4, name: 'Clamp Meter', model: 'FLUKE-376' }
-  ]
+  // Use backend data; remove local mock data
 
-  const mockTestRecordsData = [
-    {
-      id: 1,
-      equipment_id: 1,
-      equipment_name: 'Digital Multimeter FLUKE 87-V',
-      test_date: '2024-01-25T10:30:00Z',
-      operator_name: 'John Doe',
-      brand: 'FLUKE',
-      model: 'FLUKE-87V',
-      serial_number: 'SN001234',
-      calibration_date: '2024-01-20',
-      due_date: '2025-01-20',
-      temperature: '25.0',
-      humidity: '45.0',
-      cal_test: '1.02',
-      cal_first_retest: '1.01',
-      cal_second_retest: '1.03',
-      golden_conductive_test: '1000.5',
-      golden_conductive_first_retest: '1001.2',
-      golden_conductive_second_retest: '999.8',
-      golden_insulative_test: '50000.0',
-      golden_insulative_first_retest: '50100.0',
-      golden_insulative_second_retest: '49900.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 2,
-      equipment_id: 2,
-      equipment_name: 'Insulation Resistance Tester MEGGER',
-      test_date: '2024-01-25T09:15:00Z',
-      operator_name: 'Jane Smith',
-      brand: 'MEGGER',
-      model: 'MIT-510',
-      serial_number: 'SN005678',
-      calibration_date: '2024-01-18',
-      due_date: '2025-01-18',
-      temperature: '24.5',
-      humidity: '50.0',
-      cal_test: '1.00',
-      cal_first_retest: '1.01',
-      cal_second_retest: '0.99',
-      golden_conductive_test: '1500.2',
-      golden_conductive_first_retest: '1499.8',
-      golden_conductive_second_retest: '1500.5',
-      golden_insulative_test: '60000.0',
-      golden_insulative_first_retest: '60100.0',
-      golden_insulative_second_retest: '59900.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 3,
-      equipment_id: 1,
-      equipment_name: 'Digital Multimeter FLUKE 87-V',
-      test_date: '2024-01-24T14:20:00Z',
-      operator_name: 'Tom Wilson',
-      brand: 'FLUKE',
-      model: 'FLUKE-87V',
-      serial_number: 'SN001235',
-      calibration_date: '2024-01-19',
-      due_date: '2025-01-19',
-      temperature: '23.8',
-      humidity: '48.0',
-      cal_test: '1.02',
-      cal_first_retest: '1.02',
-      cal_second_retest: '1.01',
-      golden_conductive_test: '998.5',
-      golden_conductive_first_retest: '999.0',
-      golden_conductive_second_retest: '998.0',
-      golden_insulative_test: '49500.0',
-      golden_insulative_first_retest: '49600.0',
-      golden_insulative_second_retest: '49400.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 4,
-      equipment_id: 3,
-      equipment_name: 'Earth Ground Resistance Tester',
-      test_date: '2024-01-23T11:45:00Z',
-      operator_name: 'Sarah Johnson',
-      brand: 'FLUKE',
-      model: 'FLUKE-1623',
-      serial_number: 'SN009012',
-      calibration_date: '2024-01-17',
-      due_date: '2025-01-17',
-      temperature: '26.2',
-      humidity: '42.0',
-      cal_test: '0.98',
-      cal_first_retest: '0.99',
-      cal_second_retest: '0.97',
-      golden_conductive_test: '2000.0',
-      golden_conductive_first_retest: '2001.5',
-      golden_conductive_second_retest: '1998.5',
-      golden_insulative_test: '70000.0',
-      golden_insulative_first_retest: '70100.0',
-      golden_insulative_second_retest: '69900.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 5,
-      equipment_id: 4,
-      equipment_name: 'Clamp Meter',
-      test_date: '2024-01-22T16:30:00Z',
-      operator_name: 'Mike Brown',
-      brand: 'FLUKE',
-      model: 'FLUKE-376',
-      serial_number: 'SN013456',
-      calibration_date: '2024-01-16',
-      due_date: '2025-01-16',
-      temperature: '25.5',
-      humidity: '46.0',
-      cal_test: '1.01',
-      cal_first_retest: '1.00',
-      cal_second_retest: '1.02',
-      golden_conductive_test: '1200.8',
-      golden_conductive_first_retest: '1201.2',
-      golden_conductive_second_retest: '1200.4',
-      golden_insulative_test: '55000.0',
-      golden_insulative_first_retest: '55100.0',
-      golden_insulative_second_retest: '54900.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 6,
-      equipment_id: 2,
-      equipment_name: 'Insulation Resistance Tester MEGGER',
-      test_date: '2024-01-21T13:15:00Z',
-      operator_name: 'Lisa Davis',
-      brand: 'MEGGER',
-      model: 'MIT-510',
-      serial_number: 'SN005679',
-      calibration_date: '2024-01-15',
-      due_date: '2025-01-15',
-      temperature: '24.0',
-      humidity: '52.0',
-      cal_test: '1.03',
-      cal_first_retest: '1.02',
-      cal_second_retest: '1.04',
-      golden_conductive_test: '1450.0',
-      golden_conductive_first_retest: '1450.5',
-      golden_conductive_second_retest: '1449.5',
-      golden_insulative_test: '58000.0',
-      golden_insulative_first_retest: '58100.0',
-      golden_insulative_second_retest: '57900.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 7,
-      equipment_id: 1,
-      equipment_name: 'Digital Multimeter FLUKE 87-V',
-      test_date: '2024-01-20T10:00:00Z',
-      operator_name: 'David Lee',
-      brand: 'FLUKE',
-      model: 'FLUKE-87V',
-      serial_number: 'SN001236',
-      calibration_date: '2024-01-14',
-      due_date: '2025-01-14',
-      temperature: '25.8',
-      humidity: '44.0',
-      cal_test: '1.00',
-      cal_first_retest: '1.01',
-      cal_second_retest: '0.99',
-      golden_conductive_test: '1005.0',
-      golden_conductive_first_retest: '1005.5',
-      golden_conductive_second_retest: '1004.5',
-      golden_insulative_test: '50200.0',
-      golden_insulative_first_retest: '50300.0',
-      golden_insulative_second_retest: '50100.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    },
-    {
-      id: 8,
-      equipment_id: 3,
-      equipment_name: 'Earth Ground Resistance Tester',
-      test_date: '2024-01-19T15:30:00Z',
-      operator_name: 'Emma White',
-      brand: 'FLUKE',
-      model: 'FLUKE-1623',
-      serial_number: 'SN009013',
-      calibration_date: '2024-01-13',
-      due_date: '2025-01-13',
-      temperature: '23.5',
-      humidity: '49.0',
-      cal_test: '0.99',
-      cal_first_retest: '0.98',
-      cal_second_retest: '1.00',
-      golden_conductive_test: '1995.0',
-      golden_conductive_first_retest: '1996.0',
-      golden_conductive_second_retest: '1994.0',
-      golden_insulative_test: '69500.0',
-      golden_insulative_first_retest: '69600.0',
-      golden_insulative_second_retest: '69400.0',
-      test_location: 'CAL Lab',
-      status: 'pass'
-    }
-  ]
-
-  // ดึงข้อมูลอุปกรณ์ทั้งหมด (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
+  // ดึงข้อมูลอุปกรณ์ทั้งหมด
   const { data: equipmentData } = useQuery({
     queryKey: ['equipment-all'],
-    queryFn: () => equipmentAPI.getAll().then(res => res.data),
+    queryFn: () => equipmentAPI.getAll().then(res => res.data?.equipment || res.data || []),
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ดึงข้อมูลบันทึกการทดสอบ (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
@@ -280,18 +71,18 @@ const TestRecords = () => {
     queryFn: () => testRecordsAPI.getAll({
       search: searchTerm,
       date: dateFilter
-    }).then(res => res.data),
+    }).then(res => res.data?.test_records || res.data || []),
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
-  const equipment = equipmentData || mockEquipmentData
-  const testRecords = testRecordsData || mockTestRecordsData
+  const equipment = equipmentData || []
+  const testRecords = testRecordsData || []
 
   // กรองข้อมูลตามการค้นหาและวันที่
   const filteredTestRecords = testRecords?.filter(record => {

@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const { Op } = require('sequelize');
 
 // POST /api/auth/register - สมัครสมาชิก
 router.post('/register', async (req, res) => {
@@ -12,7 +13,7 @@ router.post('/register', async (req, res) => {
     // ตรวจสอบว่ามีผู้ใช้นี้อยู่แล้วหรือไม่
     const existingUser = await User.findOne({
       where: {
-        [User.sequelize.Op.or]: [
+        [Op.or]: [
           { username },
           { email }
         ]

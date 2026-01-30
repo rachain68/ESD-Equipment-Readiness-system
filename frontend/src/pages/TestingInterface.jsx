@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { equipmentAPI, testAPI } from '../services/api'
+import { equipmentAPI, testRecordsAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { 
@@ -20,8 +20,18 @@ const TestingInterface = () => {
   const [serialPort, setSerialPort] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('ยังไม่ได้เชื่อมต่อ')
+  const [testType, setTestType] = useState('daily_check')
   const [testData, setTestData] = useState({
+    test_type: 'daily_check',
     cal_test: '',
+    cal_first_retest: '',
+    cal_second_retest: '',
+    golden_conductive_test: '',
+    golden_conductive_first_retest: '',
+    golden_conductive_second_retest: '',
+    golden_insulative_test: '',
+    golden_insulative_first_retest: '',
+    golden_insulative_second_retest: '',
     temperature: '',
     humidity: '',
     notes: ''
@@ -30,64 +40,39 @@ const TestingInterface = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
-  // ข้อมูลจำลองเพื่อทดสอบ (ไม่ต้องดึงจาก backend)
-  const mockEquipmentData = [
-    { id: 1, name: 'Digital Multimeter FLUKE 87-V', model: 'FLUKE-87V' },
-    { id: 2, name: 'Insulation Resistance Tester MEGGER', model: 'MIT-510' },
-    { id: 3, name: 'Earth Ground Resistance Tester', model: 'FLUKE-1623' },
-    { id: 4, name: 'Clamp Meter', model: 'FLUKE-376' }
-  ]
+  // Use backend data; remove local mock data
 
-  const mockLatestTests = [
-    {
-      id: 1,
-      equipment_name: 'Digital Multimeter FLUKE 87-V',
-      cal_test: 1000.5,
-      status: 'pass',
-      test_date: '2024-01-25T10:30:00Z',
-      operator_name: 'John Doe'
-    },
-    {
-      id: 2,
-      equipment_name: 'Insulation Resistance Tester MEGGER',
-      cal_test: 1500.2,
-      status: 'pass',
-      test_date: '2024-01-25T09:15:00Z',
-      operator_name: 'Jane Smith'
-    }
-  ]
-
-  // ดึงข้อมูลอุปกรณ์ที่ใช้งานได้ (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
+  // ดึงข้อมูลอุปกรณ์ที่ใช้งานได้
   const { data: equipmentData } = useQuery({
     queryKey: ['equipment-active'],
-    queryFn: () => equipmentAPI.getAll({ status: 'active' }).then(res => res.data),
+    queryFn: () => equipmentAPI.getAll({ status: 'active' }).then(res => res.data?.equipment || res.data || []),
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ดึงข้อมูลการทดสอบล่าสุด (ปิดชั่วคราวเพื่อแก้ไขปัญหา refresh)
   const { data: latestTests } = useQuery({
     queryKey: ['latest-tests-10'],
-    queryFn: () => testAPI.getLatest({ limit: 10 }).then(res => res.data),
+    queryFn: () => testRecordsAPI.getAll({ limit: 10 }).then(res => res.data?.test_records || res.data || []),
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    enabled: false, // ปิดชั่วคราว
+    enabled: true,
   })
 
   // ใช้ข้อมูลจริงถ้ามี หรือใช้ข้อมูลจำลอง
-  const equipment = equipmentData || mockEquipmentData
-  const latestTestsData = latestTests || mockLatestTests
+  const equipment = equipmentData || []
+  const latestTestsData = latestTests || []
 
   // บันทึกการทดสอบ
   const testMutation = useMutation({
-    mutationFn: testAPI.create,
+    mutationFn: testRecordsAPI.create,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['latest-tests'] })
       queryClient.invalidateQueries({ queryKey: ['test-stats'] })
@@ -95,7 +80,16 @@ const TestingInterface = () => {
       
       // รีเซ็ตฟอร์ม
       setTestData({
+        test_type: testType,
         cal_test: '',
+        cal_first_retest: '',
+        cal_second_retest: '',
+        golden_conductive_test: '',
+        golden_conductive_first_retest: '',
+        golden_conductive_second_retest: '',
+        golden_insulative_test: '',
+        golden_insulative_first_retest: '',
+        golden_insulative_second_retest: '',
         temperature: '',
         humidity: '',
         notes: ''
@@ -250,19 +244,52 @@ const TestingInterface = () => {
       return
     }
     
-    if (!testData.cal_test) {
-      toast.error('กรุณากรอกค่าความต้านทาน')
+    // ตรวจสอบค่าที่จำเป็นตามประเภทการทดสอบ
+    let hasRequiredData = false
+    
+    if (testType === 'daily_check' || testType === 'cal_test' || testType === 'full_test') {
+      if (testData.cal_test) hasRequiredData = true
+    }
+    if (testType === 'daily_check' || testType === 'golden_conductive' || testType === 'full_test') {
+      if (testData.golden_conductive_test) hasRequiredData = true
+    }
+    if (testType === 'daily_check' || testType === 'golden_insulative' || testType === 'full_test') {
+      if (testData.golden_insulative_test) hasRequiredData = true
+    }
+    
+    if (!hasRequiredData) {
+      toast.error('กรุณากรอกข้อมูลการทดสอบอย่างน้อย 1 ค่า')
       return
     }
 
-    testMutation.mutate({
+    // สร้างข้อมูลที่จะส่งไปบันทึก
+    const dataToSave = {
       equipment_id: parseInt(selectedEquipment),
-      cal_test: parseFloat(testData.cal_test),
+      test_type: testType,
       temperature: testData.temperature || null,
       humidity: testData.humidity || null,
       notes: testData.notes,
       test_status: 'pending'
-    })
+    }
+
+    // เพิ่มข้อมูลตามประเภทการทดสอบ
+    if (testType === 'daily_check' || testType === 'cal_test' || testType === 'full_test') {
+      dataToSave.cal_test = parseFloat(testData.cal_test) || null
+      dataToSave.cal_first_retest = parseFloat(testData.cal_first_retest) || null
+      dataToSave.cal_second_retest = parseFloat(testData.cal_second_retest) || null
+    }
+    if (testType === 'daily_check' || testType === 'golden_conductive' || testType === 'full_test') {
+      dataToSave.golden_conductive_test = parseFloat(testData.golden_conductive_test) || null
+      dataToSave.golden_conductive_first_retest = parseFloat(testData.golden_conductive_first_retest) || null
+      dataToSave.golden_conductive_second_retest = parseFloat(testData.golden_conductive_second_retest) || null
+    }
+    if (testType === 'daily_check' || testType === 'golden_insulative' || testType === 'full_test') {
+      dataToSave.golden_insulative_test = parseFloat(testData.golden_insulative_test) || null
+      dataToSave.golden_insulative_first_retest = parseFloat(testData.golden_insulative_first_retest) || null
+      dataToSave.golden_insulative_second_retest = parseFloat(testData.golden_insulative_second_retest) || null
+    }
+
+    testMutation.mutate(dataToSave)
   }
 
   const getEquipmentName = (id) => {
@@ -463,20 +490,149 @@ const TestingInterface = () => {
               <h3 className="text-lg font-medium text-gray-900">บันทึกข้อมูลการทดสอบ</h3>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); handleSaveTest(); }} className="space-y-4">
+              {/* Test Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ค่าความต้านทาน (Ω) *
+                  ประเภทการทดสอบ *
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={testData.cal_test}
-                  onChange={(e) => setTestData({...testData, cal_test: e.target.value})}
+                <select
+                  value={testType}
+                  onChange={(e) => {
+                    setTestType(e.target.value)
+                    setTestData({...testData, test_type: e.target.value})
+                  }}
                   className="input"
-                  placeholder="0.00"
-                />
+                  disabled={isTesting}
+                >
+                  <option value="daily_check">การทดสอบเช็คประจำวัน</option>
+                </select>
               </div>
+
+              {/* CAL Test Results */}
+              {(testType === 'daily_check' || testType === 'cal_test' || testType === 'full_test') && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-900">ผลการทดสอบ CAL (Ω)</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.cal_test}
+                        onChange={(e) => setTestData({...testData, cal_test: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">1st Re-test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.cal_first_retest}
+                        onChange={(e) => setTestData({...testData, cal_first_retest: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">2nd Re-test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.cal_second_retest}
+                        onChange={(e) => setTestData({...testData, cal_second_retest: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Golden Unit Conductive Test Results */}
+              {(testType === 'daily_check' || testType === 'golden_conductive' || testType === 'full_test') && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-900">Golden Unit (Conductive) Test Results (Ω)</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.golden_conductive_test}
+                        onChange={(e) => setTestData({...testData, golden_conductive_test: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">1st Re-test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.golden_conductive_first_retest}
+                        onChange={(e) => setTestData({...testData, golden_conductive_first_retest: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">2nd Re-test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.golden_conductive_second_retest}
+                        onChange={(e) => setTestData({...testData, golden_conductive_second_retest: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Golden Unit Insulative Test Results */}
+              {(testType === 'daily_check' || testType === 'golden_insulative' || testType === 'full_test') && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-900">Golden Unit (Insulative) Test Results (Ω)</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.golden_insulative_test}
+                        onChange={(e) => setTestData({...testData, golden_insulative_test: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">1st Re-test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.golden_insulative_first_retest}
+                        onChange={(e) => setTestData({...testData, golden_insulative_first_retest: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">2nd Re-test</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={testData.golden_insulative_second_retest}
+                        onChange={(e) => setTestData({...testData, golden_insulative_second_retest: e.target.value})}
+                        className="input text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

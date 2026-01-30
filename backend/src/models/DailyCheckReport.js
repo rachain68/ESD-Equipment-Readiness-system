@@ -74,10 +74,4 @@ const DailyCheckReport = sequelize.define('DailyCheckReport', {
   ]
 });
 
-// กำหนดความสัมพันธ์
-DailyCheckReport.belongsTo(Equipment, { foreignKey: 'equipment_id', as: 'equipment' });
-DailyCheckReport.belongsTo(User, { foreignKey: 'operator_id', as: 'operator' });
-Equipment.hasMany(DailyCheckReport, { foreignKey: 'equipment_id', as: 'dailyCheckReports' });
-User.hasMany(DailyCheckReport, { foreignKey: 'operator_id', as: 'dailyCheckReports' });
-
 module.exports = DailyCheckReport;

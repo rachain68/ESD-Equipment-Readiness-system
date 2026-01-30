@@ -304,31 +304,45 @@ const getTestStats = async (req, res) => {
     }
 
     const totalTests = await TestRecord.count({ where: whereClause })
-    const passTests = await TestRecord.count({ 
-      where: { ...whereClause, test_status: 'pass' } 
-    })
-    const failTests = await TestRecord.count({ 
-      where: { ...whereClause, test_status: 'fail' } 
-    })
-    const pendingTests = await TestRecord.count({ 
-      where: { ...whereClause, test_status: 'pending' } 
-    })
+    
+    // ใช้ try-catch สำหรับ column ที่อาจไม่มี
+    let passTests = 0, failTests = 0, pendingTests = 0
+    try {
+      passTests = await TestRecord.count({ 
+        where: { ...whereClause, test_status: 'pass' } 
+      })
+      failTests = await TestRecord.count({ 
+        where: { ...whereClause, test_status: 'fail' } 
+      })
+      pendingTests = await TestRecord.count({ 
+        where: { ...whereClause, test_status: 'pending' } 
+      })
+    } catch (e) {
+      // ถ้าไม่มี test_status column ให้ถือว่า pending ทั้งหมด
+      pendingTests = totalTests
+    }
 
     // ค่าเฉลี่ยความต้านทาน (ใช้ค่าจาก CAL test)
-    const avgResistance = await TestRecord.findOne({
-      where: whereClause,
-      attributes: [
-        [TestRecord.sequelize.fn('AVG', TestRecord.sequelize.col('cal_test')), 'avg_resistance']
-      ],
-      raw: true
-    })
+    let avgResistanceValue = 0
+    try {
+      const avgResistance = await TestRecord.findOne({
+        where: whereClause,
+        attributes: [
+          [TestRecord.sequelize.fn('AVG', TestRecord.sequelize.col('cal_test')), 'avg_resistance']
+        ],
+        raw: true
+      })
+      avgResistanceValue = avgResistance?.avg_resistance || 0
+    } catch (e) {
+      avgResistanceValue = 0
+    }
 
     res.json({
       total: totalTests,
       pass: passTests,
       fail: failTests,
       pending: pendingTests,
-      avgResistance: avgResistance.avg_resistance || 0
+      avgResistance: avgResistanceValue
     })
   } catch (error) {
     console.error('Error fetching test stats:', error)
