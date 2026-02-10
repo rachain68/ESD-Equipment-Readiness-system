@@ -153,11 +153,11 @@ const EquipmentManagement = () => {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-primary flex items-center"
+          className="btn btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={!isAdmin}
         >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          เพิ่มอุปกรณ์
+          <PlusIcon className="w-5 h-5" />
+          <span className="text-sm">เพิ่มอุปกรณ์</span>
         </button>
       </div>
 
