@@ -30,12 +30,12 @@ const getAllTestRecords = async (req, res) => {
         {
           model: Equipment,
           as: 'equipment',
-          attributes: ['id', 'name', 'model', 'serial_number']
+          attributes: ['id', 'name', 'brand', 'model', 'serial_number', 'calibration_date', 'due_date', 'status', 'location', 'description']
         },
         {
           model: User,
           as: 'operator',
-          attributes: ['id', 'full_name', 'email']
+          attributes: ['id', 'username', 'full_name', 'email']
         }
       ],
       order: [['test_date', 'DESC']],
@@ -68,12 +68,12 @@ const getTestRecordById = async (req, res) => {
         {
           model: Equipment,
           as: 'equipment',
-          attributes: ['id', 'name', 'model', 'serial_number']
+          attributes: ['id', 'name', 'brand', 'model', 'serial_number', 'calibration_date', 'due_date', 'status', 'location', 'description']
         },
         {
           model: User,
           as: 'operator',
-          attributes: ['id', 'full_name', 'email']
+          attributes: ['id', 'username', 'full_name', 'email']
         }
       ]
     })
@@ -95,6 +95,7 @@ const createTestRecord = async (req, res) => {
     const {
       equipment_id,
       test_date,
+      test_type,
       brand,
       model,
       serial_number,
@@ -112,8 +113,15 @@ const createTestRecord = async (req, res) => {
       golden_insulative_first_retest,
       golden_insulative_second_retest,
       test_location,
+      test_status,
+      notes,
       operator_id
     } = req.body
+    
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!equipment_id) {
+      return res.status(400).json({ error: 'กรุณาระบุอุปกรณ์ (equipment_id)' })
+    }
     
     // ตรวจสอบว่ามีอุปกรณ์นี้อยู่จริง
     const equipment = await Equipment.findByPk(equipment_id)
@@ -121,14 +129,28 @@ const createTestRecord = async (req, res) => {
       return res.status(400).json({ error: 'ไม่พบอุปกรณ์ที่ระบุ' })
     }
     
+    // กำหนดวันที่ทดสอบ — ใช้วันนี้ถ้าไม่ได้ส่งมา
+    const actualTestDate = test_date || new Date().toISOString().split('T')[0]
+    
+    // ใช้ operator_id จาก body หรือจาก token (req.user)
+    const actualOperatorId = operator_id || (req.user ? req.user.id : null)
+    
+    // ดึงข้อมูลจากอุปกรณ์มาใส่อัตโนมัติถ้า frontend ไม่ได้ส่งมา
+    const actualBrand = brand || equipment.brand || null
+    const actualModel = model || equipment.model || null
+    const actualSerialNumber = serial_number || equipment.serial_number || null
+    const actualCalibrationDate = calibration_date || equipment.calibration_date || null
+    const actualDueDate = due_date || equipment.due_date || null
+    
     const testRecord = await TestRecord.create({
       equipment_id,
-      test_date,
-      brand,
-      model,
-      serial_number,
-      calibration_date,
-      due_date,
+      test_date: actualTestDate,
+      test_type: test_type || 'daily_check',
+      brand: actualBrand,
+      model: actualModel,
+      serial_number: actualSerialNumber,
+      calibration_date: actualCalibrationDate,
+      due_date: actualDueDate,
       temperature: temperature ? parseFloat(temperature) : null,
       humidity: humidity ? parseFloat(humidity) : null,
       cal_test: cal_test ? parseFloat(cal_test) : null,
@@ -140,8 +162,10 @@ const createTestRecord = async (req, res) => {
       golden_insulative_test: golden_insulative_test ? parseFloat(golden_insulative_test) : null,
       golden_insulative_first_retest: golden_insulative_first_retest ? parseFloat(golden_insulative_first_retest) : null,
       golden_insulative_second_retest: golden_insulative_second_retest ? parseFloat(golden_insulative_second_retest) : null,
-      test_location,
-      operator_id
+      test_location: test_location || 'CAL Lab',
+      test_status: test_status || 'pending',
+      notes: notes || null,
+      operator_id: actualOperatorId
     })
     
     // ดึงข้อมูลที่สร้างขึ้นมาพร้อมความสัมพันธ์
@@ -150,12 +174,12 @@ const createTestRecord = async (req, res) => {
         {
           model: Equipment,
           as: 'equipment',
-          attributes: ['id', 'name', 'model', 'serial_number']
+          attributes: ['id', 'name', 'brand', 'model', 'serial_number', 'calibration_date', 'due_date', 'status', 'location', 'description']
         },
         {
           model: User,
           as: 'operator',
-          attributes: ['id', 'full_name', 'email']
+          attributes: ['id', 'username', 'full_name', 'email']
         }
       ]
     })
@@ -163,7 +187,11 @@ const createTestRecord = async (req, res) => {
     res.status(201).json(newTestRecord)
   } catch (error) {
     console.error('Error creating test record:', error)
-    res.status(500).json({ error: 'ไม่สามารถสร้างบันทึกการทดสอบได้' })
+    // ส่ง error detail กลับไปเพื่อช่วย debug
+    const errMsg = process.env.NODE_ENV === 'development'
+      ? `ไม่สามารถสร้างบันทึกการทดสอบได้: ${error.message}`
+      : 'ไม่สามารถสร้างบันทึกการทดสอบได้'
+    res.status(500).json({ error: errMsg })
   }
 }
 
@@ -200,12 +228,12 @@ const updateTestRecord = async (req, res) => {
         {
           model: Equipment,
           as: 'equipment',
-          attributes: ['id', 'name', 'model', 'serial_number']
+          attributes: ['id', 'name', 'brand', 'model', 'serial_number', 'calibration_date', 'due_date']
         },
         {
           model: User,
           as: 'operator',
-          attributes: ['id', 'full_name', 'email']
+          attributes: ['id', 'username', 'full_name', 'email']
         }
       ]
     })
@@ -260,12 +288,12 @@ const exportTestRecords = async (req, res) => {
         {
           model: Equipment,
           as: 'equipment',
-          attributes: ['id', 'name', 'model', 'serial_number']
+          attributes: ['id', 'name', 'brand', 'model', 'serial_number', 'calibration_date', 'due_date']
         },
         {
           model: User,
           as: 'operator',
-          attributes: ['id', 'full_name', 'email']
+          attributes: ['id', 'username', 'full_name', 'email']
         }
       ],
       order: [['test_date', 'DESC']]
@@ -360,7 +388,7 @@ const getLatestTestRecords = async (req, res) => {
         {
           model: Equipment,
           as: 'equipment',
-          attributes: ['id', 'name', 'model']
+          attributes: ['id', 'name', 'brand', 'model', 'serial_number', 'calibration_date', 'due_date']
         },
         {
           model: User,

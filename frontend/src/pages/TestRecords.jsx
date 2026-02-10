@@ -674,11 +674,11 @@ const TestRecords = () => {
                         {!record.test_type && 'การทดสอบเช็คประจำวัน'}
                       </span>
                     </td>
-                    <td className="font-medium">{getEquipmentName(record.equipment_id)}</td>
-                    <td>{record.model || '-'}</td>
-                    <td>{record.serial_number || '-'}</td>
+                    <td className="font-medium">{record.equipment?.name || getEquipmentName(record.equipment_id)}</td>
+                    <td>{record.model || record.equipment?.model || '-'}</td>
+                    <td>{record.serial_number || record.equipment?.serial_number || '-'}</td>
                     <td>{record.test_location || 'CAL Lab'}</td>
-                    <td>{record.operator_name || '-'}</td>
+                    <td>{record.operator?.full_name || record.operator_name || '-'}</td>
                     <td className="text-right">
                       <div className="flex justify-end space-x-2">
                         <button
@@ -744,7 +744,20 @@ const TestRecords = () => {
                       </label>
                       <select
                         value={formData.equipment_id}
-                        onChange={(e) => setFormData({...formData, equipment_id: e.target.value})}
+                        onChange={(e) => {
+                          const selectedId = e.target.value
+                          const selectedEq = equipment?.find(eq => eq.id === parseInt(selectedId))
+                          setFormData({
+                            ...formData, 
+                            equipment_id: selectedId,
+                            // Auto-fill ข้อมูลจากอุปกรณ์ที่เลือก
+                            brand: selectedEq?.brand || formData.brand || '',
+                            model: selectedEq?.model || formData.model || '',
+                            serial_number: selectedEq?.serial_number || formData.serial_number || '',
+                            calibration_date: selectedEq?.calibration_date || formData.calibration_date || '',
+                            due_date: selectedEq?.due_date || formData.due_date || ''
+                          })
+                        }}
                         className="input"
                         required
                       >
@@ -1106,33 +1119,33 @@ const TestRecords = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">อุปกรณ์</label>
-                      <p className="text-gray-900 font-medium">{getEquipmentName(viewingRecord.equipment_id)}</p>
+                      <p className="text-gray-900 font-medium">{viewingRecord.equipment?.name || getEquipmentName(viewingRecord.equipment_id)}</p>
                     </div>
                     
 
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">ยี่ห้อ</label>
-                      <p className="text-gray-900">{viewingRecord.brand || '-'}</p>
+                      <p className="text-gray-900">{viewingRecord.brand || viewingRecord.equipment?.brand || '-'}</p>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">รุ่น</label>
-                      <p className="text-gray-900">{viewingRecord.model || '-'}</p>
+                      <p className="text-gray-900">{viewingRecord.model || viewingRecord.equipment?.model || '-'}</p>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">หมายเลขซีเรียล</label>
-                      <p className="text-gray-900">{viewingRecord.serial_number || '-'}</p>
+                      <p className="text-gray-900">{viewingRecord.serial_number || viewingRecord.equipment?.serial_number || '-'}</p>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">วันที่สอบเทียบ</label>
-                      <p className="text-gray-900">{viewingRecord.calibration_date || '-'}</p>
+                      <p className="text-gray-900">{viewingRecord.calibration_date || viewingRecord.equipment?.calibration_date ? new Date(viewingRecord.calibration_date || viewingRecord.equipment?.calibration_date).toLocaleDateString('th-TH') : '-'}</p>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">วันที่ครบกำหนดสอบเทียบ</label>
-                      <p className="text-gray-900">{viewingRecord.due_date || '-'}</p>
+                      <p className="text-gray-900">{(viewingRecord.due_date || viewingRecord.equipment?.due_date) ? new Date(viewingRecord.due_date || viewingRecord.equipment?.due_date).toLocaleDateString('th-TH') : '-'}</p>
                     </div>
 
                     <div>
@@ -1284,19 +1297,19 @@ const TestRecords = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">ผู้ดำเนินการ</label>
-                      <p className="text-gray-900">{viewingRecord.operator_name || '-'}</p>
+                      <p className="text-gray-900">{viewingRecord.operator?.full_name || viewingRecord.operator_name || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">สถานะ</label>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        viewingRecord.status === 'pass' 
+                        viewingRecord.test_status === 'pass' 
                           ? 'bg-green-100 text-green-800' 
-                          : viewingRecord.status === 'fail'
+                          : viewingRecord.test_status === 'fail'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {viewingRecord.status === 'pass' ? 'ผ่าน' : 
-                         viewingRecord.status === 'fail' ? 'ไม่ผ่าน' : 'รอดำเนินการ'}
+                        {viewingRecord.test_status === 'pass' ? 'ผ่าน' : 
+                         viewingRecord.test_status === 'fail' ? 'ไม่ผ่าน' : 'รอดำเนินการ'}
                       </span>
                     </div>
                   </div>

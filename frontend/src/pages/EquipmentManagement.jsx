@@ -21,9 +21,11 @@ const EquipmentManagement = () => {
   const [editingEquipment, setEditingEquipment] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
+    brand: '',
     model: '',
     serial_number: '',
     calibration_date: '',
+    due_date: '',
     status: 'active',
     location: '',
     description: ''
@@ -94,9 +96,11 @@ const EquipmentManagement = () => {
   const resetForm = () => {
     setFormData({
       name: '',
+      brand: '',
       model: '',
       serial_number: '',
       calibration_date: '',
+      due_date: '',
       status: 'active',
       location: '',
       description: ''
@@ -117,9 +121,11 @@ const EquipmentManagement = () => {
     setEditingEquipment(equipment)
     setFormData({
       name: equipment.name,
+      brand: equipment.brand || '',
       model: equipment.model || '',
       serial_number: equipment.serial_number || '',
       calibration_date: equipment.calibration_date || '',
+      due_date: equipment.due_date || '',
       status: equipment.status,
       location: equipment.location || '',
       description: equipment.description || ''
@@ -198,9 +204,11 @@ const EquipmentManagement = () => {
             <thead>
               <tr>
                 <th>ชื่ออุปกรณ์</th>
+                <th>ยี่ห้อ</th>
                 <th>รุ่น</th>
                 <th>หมายเลขซีเรียล</th>
                 <th>วันที่สอบเทียบ</th>
+                <th>วันครบกำหนด</th>
                 <th>สถานะ</th>
                 <th>สถานที่</th>
                 <th className="text-right">การดำเนินการ</th>
@@ -209,7 +217,7 @@ const EquipmentManagement = () => {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-8">
+                  <td colSpan="9" className="text-center py-8">
                     <div className="loading-spinner mx-auto" />
                   </td>
                 </tr>
@@ -217,11 +225,18 @@ const EquipmentManagement = () => {
                 equipment.map((equipment) => (
                   <tr key={equipment.id}>
                     <td className="font-medium">{equipment.name}</td>
+                    <td>{equipment.brand || '-'}</td>
                     <td>{equipment.model || '-'}</td>
                     <td>{equipment.serial_number || '-'}</td>
                     <td>
                       {equipment.calibration_date 
                         ? new Date(equipment.calibration_date).toLocaleDateString('th-TH')
+                        : '-'
+                      }
+                    </td>
+                    <td>
+                      {equipment.due_date 
+                        ? new Date(equipment.due_date).toLocaleDateString('th-TH')
                         : '-'
                       }
                     </td>
@@ -253,7 +268,7 @@ const EquipmentManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-8 text-gray-500">
+                  <td colSpan="9" className="text-center py-8 text-gray-500">
                     ไม่พบข้อมูลอุปกรณ์
                   </td>
                 </tr>
@@ -298,6 +313,18 @@ const EquipmentManagement = () => {
                       className="input"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ยี่ห้อ
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.brand}
+                      onChange={(e) => setFormData({...formData, brand: e.target.value})}
+                      className="input"
+                    />
+                  </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -331,6 +358,18 @@ const EquipmentManagement = () => {
                       type="date"
                       value={formData.calibration_date}
                       onChange={(e) => setFormData({...formData, calibration_date: e.target.value})}
+                      className="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      วันครบกำหนดสอบเทียบ
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData({...formData, due_date: e.target.value})}
                       className="input"
                     />
                   </div>

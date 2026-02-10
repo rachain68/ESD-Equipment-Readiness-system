@@ -11,6 +11,10 @@ const Equipment = sequelize.define('Equipment', {
     type: DataTypes.STRING(100),
     allowNull: false
   },
+  brand: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
   model: {
     type: DataTypes.STRING(50),
     allowNull: true
@@ -21,6 +25,10 @@ const Equipment = sequelize.define('Equipment', {
     unique: true
   },
   calibration_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  due_date: {
     type: DataTypes.DATEONLY,
     allowNull: true
   },

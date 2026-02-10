@@ -265,11 +265,15 @@ const TestingInterface = () => {
     // สร้างข้อมูลที่จะส่งไปบันทึก
     const dataToSave = {
       equipment_id: parseInt(selectedEquipment),
+      // เพิ่มวันที่ทดสอบ (DATEONLY) เพื่อให้ตรงกับ model ฝั่งเซิร์ฟเวอร์
+      test_date: new Date().toISOString().split('T')[0],
       test_type: testType,
       temperature: testData.temperature || null,
       humidity: testData.humidity || null,
       notes: testData.notes,
-      test_status: 'pending'
+      test_status: 'pending',
+      // ส่ง operator_id ถ้ามีผู้ใช้งานล็อกอินอยู่
+      operator_id: user?.id || null
     }
 
     // เพิ่มข้อมูลตามประเภทการทดสอบ

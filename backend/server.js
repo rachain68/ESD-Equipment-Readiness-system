@@ -83,6 +83,43 @@ const startServer = async () => {
     await sequelize.sync();
     console.log('Database synchronized');
     
+    // เพิ่มคอลัมน์ที่ขาดหายจากตาราง test_records (ถ้ายังไม่มี)
+    try {
+      const [columns] = await sequelize.query("SHOW COLUMNS FROM test_records LIKE 'test_status'");
+      if (columns.length === 0) {
+        await sequelize.query("ALTER TABLE test_records ADD COLUMN test_status ENUM('pass', 'fail', 'pending') DEFAULT 'pending'");
+        console.log('Added missing column: test_status');
+      }
+      const [cols2] = await sequelize.query("SHOW COLUMNS FROM test_records LIKE 'test_type'");
+      if (cols2.length === 0) {
+        await sequelize.query("ALTER TABLE test_records ADD COLUMN test_type VARCHAR(50) DEFAULT 'daily_check'");
+        console.log('Added missing column: test_type');
+      }
+      const [cols3] = await sequelize.query("SHOW COLUMNS FROM test_records LIKE 'notes'");
+      if (cols3.length === 0) {
+        await sequelize.query("ALTER TABLE test_records ADD COLUMN notes TEXT NULL");
+        console.log('Added missing column: notes');
+      }
+    } catch (migrationErr) {
+      console.warn('Auto-migration warning (non-fatal):', migrationErr.message);
+    }
+    
+    // เพิ่มคอลัมน์ที่ขาดหายจากตาราง equipment
+    try {
+      const [eqBrand] = await sequelize.query("SHOW COLUMNS FROM equipment LIKE 'brand'");
+      if (eqBrand.length === 0) {
+        await sequelize.query("ALTER TABLE equipment ADD COLUMN brand VARCHAR(100) NULL AFTER name");
+        console.log('Added missing column to equipment: brand');
+      }
+      const [eqDueDate] = await sequelize.query("SHOW COLUMNS FROM equipment LIKE 'due_date'");
+      if (eqDueDate.length === 0) {
+        await sequelize.query("ALTER TABLE equipment ADD COLUMN due_date DATE NULL AFTER calibration_date");
+        console.log('Added missing column to equipment: due_date');
+      }
+    } catch (eqMigrationErr) {
+      console.warn('Equipment auto-migration warning (non-fatal):', eqMigrationErr.message);
+    }
+    
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

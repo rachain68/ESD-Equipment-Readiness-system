@@ -88,6 +88,16 @@ const TestRecord = sequelize.define('TestRecord', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
   },
+  // Test Type and Notes
+  test_type: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: 'daily_check'
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   // Test Location and Operator
   test_location: {
     type: DataTypes.ENUM('CAL Lab', 'Field'),

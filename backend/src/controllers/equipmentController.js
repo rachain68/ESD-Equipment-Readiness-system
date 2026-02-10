@@ -68,9 +68,11 @@ const createEquipment = async (req, res) => {
   try {
     const {
       name,
+      brand,
       model,
       serial_number,
       calibration_date,
+      due_date,
       status = 'active',
       location,
       description
@@ -89,9 +91,11 @@ const createEquipment = async (req, res) => {
 
     const equipment = await Equipment.create({
       name,
+      brand,
       model,
       serial_number,
       calibration_date,
+      due_date,
       status,
       location,
       description
